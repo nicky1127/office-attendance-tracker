@@ -180,7 +180,7 @@ const Calendar = () => {
         </div>
         <div className="flex items-center">
           <div className="w-3 h-3 rounded-full bg-purple-50 border border-purple-500 mr-1"></div>
-          <span>Holiday</span>
+          <span>Bank Holiday</span>
         </div>
         <div className="flex items-center">
           <div className="w-3 h-3 rounded-full bg-white border border-gray-300 mr-1"></div>
