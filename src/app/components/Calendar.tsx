@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import {
   format,
   isToday,
@@ -17,9 +17,19 @@ import {
   isBankHoliday,
   getBankHolidaysBetweenDates,
 } from "@/utils/bankHolidays";
+import { Briefcase, Umbrella } from "lucide-react";
 
 const Calendar = () => {
-  const { currentDate, attendedDays, toggleDay } = useAttendanceStore();
+  const {
+    currentDate,
+    attendedDays,
+    annualLeaveDays,
+    toggleDay,
+    toggleAnnualLeave,
+  } = useAttendanceStore();
+
+  // Mode state: 'attend' or 'leave'
+  const [mode, setMode] = useState<"attend" | "leave">("attend");
 
   // Ensure currentDate is a Date object
   const dateObj =
@@ -37,10 +47,46 @@ const Calendar = () => {
     return getBankHolidaysBetweenDates(monthStart, monthEnd);
   }, [dateObj]);
 
+  // Handle day click based on current mode
+  const handleDayClick = (dateStr: string, isNonWorking: boolean) => {
+    if (isNonWorking) return; // Don't allow clicking on non-working days
+
+    if (mode === "attend") {
+      toggleDay(dateStr);
+    } else if (mode === "leave") {
+      toggleAnnualLeave(dateStr);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-2 sm:p-4 w-full max-w-md mx-auto">
+      {/* Mode toggle buttons */}
+      <div className="flex mb-4 border border-gray-200 rounded-lg overflow-hidden">
+        <button
+          onClick={() => setMode("attend")}
+          className={`flex-1 py-2 px-4 flex items-center justify-center space-x-2 text-sm ${
+            mode === "attend"
+              ? "bg-emerald-500 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          <Briefcase size={16} />
+          <span>Mark Attendance</span>
+        </button>
+        <button
+          onClick={() => setMode("leave")}
+          className={`flex-1 py-2 px-4 flex items-center justify-center space-x-2 text-sm ${
+            mode === "leave"
+              ? "bg-amber-500 text-white"
+              : "bg-white text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          <Umbrella size={16} />
+          <span>Mark Leave</span>
+        </button>
+      </div>
+
       <div className="grid grid-cols-7 gap-1">
-        {/* Weekday headers */}
         {/* Weekday headers */}
         {weekDays.map((day, index) => (
           <div
@@ -62,6 +108,7 @@ const Calendar = () => {
 
           const dateStr = format(day, "yyyy-MM-dd");
           const isAttended = !!attendedDays[dateStr];
+          const isLeave = !!annualLeaveDays[dateStr];
           const isCurrentMonth = isSameMonth(day, dateObj);
           const bankHolidayCheck = isBankHoliday(day);
           const { isHoliday, holidayName } = bankHolidayCheck;
@@ -85,6 +132,8 @@ const Calendar = () => {
             dayClasses += " text-red-500";
           } else if (isHoliday) {
             dayClasses += " text-purple-500 bg-purple-50 opacity-80";
+          } else if (isLeave) {
+            dayClasses += " bg-amber-100 text-amber-800";
           } else if (isAttended) {
             dayClasses += " bg-emerald-500 text-white";
           } else {
@@ -102,12 +151,17 @@ const Calendar = () => {
               className={`${dayClasses} ${
                 isNonWorking ? "cursor-not-allowed" : "cursor-pointer"
               }`}
-              onClick={() => !isNonWorking && toggleDay(dateStr)}
-              title={isHoliday ? holidayName : undefined}
+              onClick={() => handleDayClick(dateStr, isNonWorking)}
+              title={
+                isHoliday ? holidayName : isLeave ? "Annual Leave" : undefined
+              }
             >
               {format(day, "d")}
               {isHoliday && (
                 <span className="absolute top-0 right-0 w-2 h-2 bg-purple-500 rounded-full"></span>
+              )}
+              {isLeave && (
+                <span className="absolute top-0 right-0 w-2 h-2 bg-amber-500 rounded-full"></span>
               )}
             </div>
           );
@@ -121,8 +175,12 @@ const Calendar = () => {
           <span>Attended</span>
         </div>
         <div className="flex items-center">
+          <div className="w-3 h-3 rounded-full bg-amber-100 border border-amber-500 mr-1"></div>
+          <span>Annual Leave</span>
+        </div>
+        <div className="flex items-center">
           <div className="w-3 h-3 rounded-full bg-purple-50 border border-purple-500 mr-1"></div>
-          <span>Bank Holiday</span>
+          <span>Holiday</span>
         </div>
         <div className="flex items-center">
           <div className="w-3 h-3 rounded-full bg-white border border-gray-300 mr-1"></div>

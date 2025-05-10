@@ -8,6 +8,7 @@ const AttendanceStats = () => {
   const {
     currentDate,
     attendedDays,
+    annualLeaveDays,
     getAttendanceRate,
     getDaysNeededForMinRate,
   } = useAttendanceStore();
@@ -27,8 +28,16 @@ const AttendanceStats = () => {
     dateStr.startsWith(monthStr)
   ).length;
 
+  // Count annual leave days in current month
+  const leaveDaysCount = Object.keys(annualLeaveDays).filter((dateStr) =>
+    dateStr.startsWith(monthStr)
+  ).length;
+
   // Count total workdays in month (excluding weekends and bank holidays)
   const totalWorkdays = countWorkdaysInMonth(dateObj);
+
+  // Calculate available workdays (excluding annual leave)
+  const availableWorkdays = totalWorkdays - leaveDaysCount;
 
   // Calculate progress bar width
   const progressWidth = `${Math.min(100, Number(formattedRate))}%`;
@@ -62,27 +71,33 @@ const AttendanceStats = () => {
       </div>
 
       {/* Days count */}
-      <div className="grid grid-cols-2 gap-3 text-center mb-3">
+      <div className="grid grid-cols-3 gap-3 text-center mb-3">
         <div className="bg-blue-50 rounded-lg p-2">
-          <p className="text-xs text-gray-600">Marked Days</p>
+          <p className="text-xs text-gray-600">Attended</p>
           <p className="text-xl font-semibold text-blue-700">
             {markedDaysCount}
           </p>
         </div>
+        <div className="bg-amber-50 rounded-lg p-2">
+          <p className="text-xs text-gray-600">Leave</p>
+          <p className="text-xl font-semibold text-amber-700">
+            {leaveDaysCount}
+          </p>
+        </div>
         <div className="bg-purple-50 rounded-lg p-2 relative group">
-          <p className="text-xs text-gray-600">Working Days</p>
+          <p className="text-xs text-gray-600">Available</p>
           <p className="text-xl font-semibold text-purple-700">
-            {totalWorkdays}
+            {availableWorkdays}
           </p>
           <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 w-48 -top-16 left-1/2 transform -translate-x-1/2 z-10">
-            Working days exclude weekends and bank holidays.
+            Working days excluding weekends, bank holidays, and annual leave.
             <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
           </div>
         </div>
       </div>
 
       {/* Days needed to reach 40% */}
-      {attendanceRate < 0.4 && (
+      {attendanceRate < 0.4 && availableWorkdays > 0 && (
         <div className="bg-amber-50 rounded-lg p-3 text-center">
           <p className="text-sm text-amber-800">
             <span className="font-medium">
@@ -98,6 +113,15 @@ const AttendanceStats = () => {
         <div className="bg-green-50 rounded-lg p-3 text-center">
           <p className="text-sm text-green-800 font-medium">
             ✓ Target attendance rate achieved
+          </p>
+        </div>
+      )}
+
+      {/* All days on leave */}
+      {availableWorkdays === 0 && totalWorkdays > 0 && (
+        <div className="bg-gray-50 rounded-lg p-3 text-center">
+          <p className="text-sm text-gray-800 font-medium">
+            All working days are marked as leave
           </p>
         </div>
       )}
