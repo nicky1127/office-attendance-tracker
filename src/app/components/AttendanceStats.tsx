@@ -42,7 +42,7 @@ const AttendanceStats = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+    <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
       <h2 className="text-lg font-medium text-gray-800 mb-3">
         Office Attendance
       </h2>

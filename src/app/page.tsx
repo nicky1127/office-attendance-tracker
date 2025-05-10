@@ -5,6 +5,7 @@ import MonthYearPicker from "./components/MonthYearPicker";
 import Calendar from "./components/Calendar";
 import AttendanceStats from "./components/AttendanceStats";
 import WeekdaySelector from "./components/WeekdaySelector";
+import ResetButton from "./components/ResetButton";
 import { useAttendanceStore } from "@/utils/attendanceStore";
 
 export default function Home() {
@@ -31,6 +32,9 @@ export default function Home() {
 
         <div className="space-y-4">
           <MonthYearPicker />
+          <div className="mb-4">
+            <ResetButton />
+          </div>
           <AttendanceStats />
           <WeekdaySelector />
           <Calendar />

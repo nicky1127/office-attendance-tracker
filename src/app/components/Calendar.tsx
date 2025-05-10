@@ -9,6 +9,7 @@ import {
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
+  getDay,
 } from "date-fns";
 import { useAttendanceStore } from "@/utils/attendanceStore";
 import { generateCalendarDays, isNonWorkingDay } from "@/utils/dateUtils";
@@ -37,7 +38,7 @@ const Calendar = () => {
   }, [dateObj]);
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-2 sm:p-4 w-full max-w-md mx-auto">
+    <div className="bg-white rounded-lg shadow-sm p-2 sm:p-4 w-full max-w-md mx-auto">
       <div className="grid grid-cols-7 gap-1">
         {/* Weekday headers */}
         {/* Weekday headers */}
@@ -62,7 +63,8 @@ const Calendar = () => {
           const dateStr = format(day, "yyyy-MM-dd");
           const isAttended = !!attendedDays[dateStr];
           const isCurrentMonth = isSameMonth(day, dateObj);
-          const { isHoliday, holidayName } = isBankHoliday(day);
+          const bankHolidayCheck = isBankHoliday(day);
+          const { isHoliday, holidayName } = bankHolidayCheck;
           const isWeekendDay = isWeekend(day);
           const isNonWorking = isWeekendDay || isHoliday;
 
@@ -75,7 +77,11 @@ const Calendar = () => {
             dayClasses += " opacity-30";
           }
 
-          if (isWeekendDay) {
+          // Sunday and Saturday for weekend styling
+          const dayOfWeek = getDay(day);
+          const isSundayOrSaturday = dayOfWeek === 0 || dayOfWeek === 6;
+
+          if (isSundayOrSaturday) {
             dayClasses += " text-red-500";
           } else if (isHoliday) {
             dayClasses += " text-purple-500 bg-purple-50 opacity-80";

@@ -11,9 +11,6 @@ import {
   addDays,
 } from "date-fns";
 
-// Import the bank holiday utility
-import { isBankHoliday } from "./bankHolidays";
-
 // Generate days for calendar view with Monday as the first day of the week
 export const generateCalendarDays = (currentDate: Date) => {
   const monthStart = startOfMonth(currentDate);
@@ -24,7 +21,7 @@ export const generateCalendarDays = (currentDate: Date) => {
   });
 
   // Get the day of the week for the first day of the month (0 = Sunday, 1 = Monday, etc.)
-  // Adjust to make Monday the first day (0 = Monday, 6 = Sunday)
+  // Convert to Monday-based index (0 = Monday, 6 = Sunday)
   const startDay = getDay(monthStart);
   const mondayAdjustedStartDay = startDay === 0 ? 6 : startDay - 1;
 
@@ -70,6 +67,9 @@ export const isDateInCurrentMonth = (
 ): boolean => {
   return isSameMonth(date, currentDate);
 };
+
+// Import the bank holiday utility
+import { isBankHoliday } from "./bankHolidays";
 
 // Check if a date is a non-working day (weekend or bank holiday)
 export const isNonWorkingDay = (date: Date): boolean => {

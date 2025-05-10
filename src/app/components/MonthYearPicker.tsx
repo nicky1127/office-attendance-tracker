@@ -84,7 +84,7 @@ const MonthYearPicker = () => {
 
   return (
     <div className="relative" ref={pickerRef}>
-      <div className="flex items-center justify-between bg-white rounded-lg shadow-md p-3 mb-4">
+      <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-3 mb-4">
         <button
           onClick={prevMonth}
           className="p-2 rounded-full hover:bg-gray-100 text-gray-600"

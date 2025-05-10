@@ -42,6 +42,7 @@ interface AttendanceState {
   toggleDay: (dateStr: string) => void;
   markWeekday: (weekday: WeekdayOption) => void;
   resetWeekdaySelection: () => void;
+  resetCurrentMonth: () => void;
 
   // Calculations
   getAttendanceRate: () => number;
@@ -144,6 +145,28 @@ export const useAttendanceStore = create<AttendanceState>()(
 
       resetWeekdaySelection: () => {
         set({ selectedWeekday: null });
+      },
+
+      resetCurrentMonth: () => {
+        const { currentDate, attendedDays } = get();
+
+        // Ensure currentDate is a Date object
+        const dateObj =
+          currentDate instanceof Date ? currentDate : new Date(currentDate);
+        const yearMonth = format(dateObj, "yyyy-MM");
+
+        // Filter out all days from the current month
+        const newAttendedDays = { ...attendedDays };
+        Object.keys(newAttendedDays).forEach((dateStr) => {
+          if (dateStr.startsWith(yearMonth)) {
+            delete newAttendedDays[dateStr];
+          }
+        });
+
+        set({
+          attendedDays: newAttendedDays,
+          selectedWeekday: null, // Also reset weekday selection
+        });
       },
 
       getAttendanceRate: () => {
