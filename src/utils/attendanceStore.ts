@@ -16,6 +16,8 @@ import {
   parseISO,
   getDaysInMonth,
 } from "date-fns";
+import { isNonWorkingDay } from "./dateUtils";
+import { isBankHoliday } from "./bankHolidays";
 
 type WeekdayOption =
   | "monday"
@@ -81,6 +83,13 @@ export const useAttendanceStore = create<AttendanceState>()(
       },
 
       toggleDay: (dateStr) => {
+        // Parse the date string to check if it's a non-working day
+        const date = parseISO(dateStr);
+        if (isNonWorkingDay(date)) {
+          // Don't toggle non-working days (weekends or bank holidays)
+          return;
+        }
+
         const { attendedDays } = get();
 
         // If day is already attended, remove it, otherwise add it
@@ -145,12 +154,14 @@ export const useAttendanceStore = create<AttendanceState>()(
         const monthStart = startOfMonth(dateObj);
         const monthEnd = endOfMonth(dateObj);
 
-        // Get all weekdays in month (excluding weekends)
+        // Get all workdays in month (excluding weekends and bank holidays)
         const daysInMonth = eachDayOfInterval({
           start: monthStart,
           end: monthEnd,
         });
-        const weekdaysInMonth = daysInMonth.filter((date) => !isWeekend(date));
+        const workdaysInMonth = daysInMonth.filter(
+          (date) => !isNonWorkingDay(date)
+        );
 
         // Count attended days in current month
         const yearMonth = format(dateObj, "yyyy-MM");
@@ -159,9 +170,9 @@ export const useAttendanceStore = create<AttendanceState>()(
         ).length;
 
         // Calculate attendance rate
-        return weekdaysInMonth.length === 0
+        return workdaysInMonth.length === 0
           ? 0
-          : attendedDaysInMonth / weekdaysInMonth.length;
+          : attendedDaysInMonth / workdaysInMonth.length;
       },
 
       getDaysNeededForMinRate: (minRate = 0.4) => {
@@ -172,12 +183,14 @@ export const useAttendanceStore = create<AttendanceState>()(
         const monthStart = startOfMonth(dateObj);
         const monthEnd = endOfMonth(dateObj);
 
-        // Get all weekdays in month (excluding weekends)
+        // Get all workdays in month (excluding weekends and bank holidays)
         const daysInMonth = eachDayOfInterval({
           start: monthStart,
           end: monthEnd,
         });
-        const weekdaysInMonth = daysInMonth.filter((date) => !isWeekend(date));
+        const workdaysInMonth = daysInMonth.filter(
+          (date) => !isNonWorkingDay(date)
+        );
 
         // Count attended days in current month
         const yearMonth = format(dateObj, "yyyy-MM");
@@ -186,7 +199,7 @@ export const useAttendanceStore = create<AttendanceState>()(
         ).length;
 
         // Calculate total days needed to reach minimum rate
-        const totalDaysNeeded = Math.ceil(weekdaysInMonth.length * minRate);
+        const totalDaysNeeded = Math.ceil(workdaysInMonth.length * minRate);
 
         // Calculate additional days needed
         const additionalDaysNeeded = Math.max(

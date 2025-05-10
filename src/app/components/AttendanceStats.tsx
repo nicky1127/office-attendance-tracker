@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { useAttendanceStore } from "@/utils/attendanceStore";
-import { countWeekdaysInMonth } from "@/utils/dateUtils";
+import { countWorkdaysInMonth } from "@/utils/dateUtils";
 
 const AttendanceStats = () => {
   const {
@@ -27,8 +27,8 @@ const AttendanceStats = () => {
     dateStr.startsWith(monthStr)
   ).length;
 
-  // Count total weekdays in month
-  const totalWeekdays = countWeekdaysInMonth(dateObj);
+  // Count total workdays in month (excluding weekends and bank holidays)
+  const totalWorkdays = countWorkdaysInMonth(dateObj);
 
   // Calculate progress bar width
   const progressWidth = `${Math.min(100, Number(formattedRate))}%`;
@@ -69,11 +69,15 @@ const AttendanceStats = () => {
             {markedDaysCount}
           </p>
         </div>
-        <div className="bg-purple-50 rounded-lg p-2">
-          <p className="text-xs text-gray-600">Weekdays</p>
+        <div className="bg-purple-50 rounded-lg p-2 relative group">
+          <p className="text-xs text-gray-600">Working Days</p>
           <p className="text-xl font-semibold text-purple-700">
-            {totalWeekdays}
+            {totalWorkdays}
           </p>
+          <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 w-48 -top-16 left-1/2 transform -translate-x-1/2 z-10">
+            Working days exclude weekends and bank holidays.
+            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+          </div>
         </div>
       </div>
 

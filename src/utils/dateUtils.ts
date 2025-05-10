@@ -8,9 +8,13 @@ import {
   isToday,
   isSameMonth,
   isWeekend,
+  addDays,
 } from "date-fns";
 
-// Generate days for calendar view
+// Import the bank holiday utility
+import { isBankHoliday } from "./bankHolidays";
+
+// Generate days for calendar view with Monday as the first day of the week
 export const generateCalendarDays = (currentDate: Date) => {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -20,10 +24,15 @@ export const generateCalendarDays = (currentDate: Date) => {
   });
 
   // Get the day of the week for the first day of the month (0 = Sunday, 1 = Monday, etc.)
+  // Adjust to make Monday the first day (0 = Monday, 6 = Sunday)
   const startDay = getDay(monthStart);
+  const mondayAdjustedStartDay = startDay === 0 ? 6 : startDay - 1;
 
   // Create empty slots for days before the first day of the month
-  const prefixDays = Array.from({ length: startDay }, (_, i) => null);
+  const prefixDays = Array.from(
+    { length: mondayAdjustedStartDay },
+    (_, i) => null
+  );
 
   // Combine prefix days and actual days
   return [...prefixDays, ...allDaysInMonth];
@@ -62,12 +71,24 @@ export const isDateInCurrentMonth = (
   return isSameMonth(date, currentDate);
 };
 
-// Count weekdays in month (excluding weekends)
-export const countWeekdaysInMonth = (date: Date): number => {
+// Check if a date is a non-working day (weekend or bank holiday)
+export const isNonWorkingDay = (date: Date): boolean => {
+  // Check if it's a weekend
+  const isWeekendDay = isWeekend(date);
+
+  // Check if it's a bank holiday
+  const { isHoliday } = isBankHoliday(date);
+
+  // Return true if it's either a weekend or a bank holiday
+  return isWeekendDay || isHoliday;
+};
+
+// Count weekdays in month (excluding weekends and bank holidays)
+export const countWorkdaysInMonth = (date: Date): number => {
   const monthStart = startOfMonth(date);
   const monthEnd = endOfMonth(date);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  // Filter out weekends
-  return daysInMonth.filter((day) => !isWeekend(day)).length;
+  // Filter out weekends and bank holidays
+  return daysInMonth.filter((day) => !isNonWorkingDay(day)).length;
 };
