@@ -26,8 +26,8 @@ const AttendanceStats = () => {
   } = useAttendanceStore();
 
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [prevRate, setPrevRate] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [wasAboveThreshold, setWasAboveThreshold] = useState(false);
 
   // Calculate stats
   const attendanceRate = getAttendanceRate();
@@ -37,9 +37,14 @@ const AttendanceStats = () => {
   // Check if target has been achieved
   const targetAchieved = attendanceRate >= 0.4;
 
+  // Ensure currentDate is a Date object
+  const dateObj =
+    currentDate instanceof Date ? currentDate : new Date(currentDate);
+
   // Trigger confetti when target is newly achieved
   useEffect(() => {
-    if (targetAchieved && prevRate < 0.4) {
+    // Check if we've just crossed the threshold from below to above
+    if (targetAchieved && !wasAboveThreshold) {
       setShowConfetti(true);
 
       // Reset the confetti flag after animation duration
@@ -50,13 +55,9 @@ const AttendanceStats = () => {
       return () => clearTimeout(timer);
     }
 
-    // Update previous rate
-    setPrevRate(attendanceRate);
-  }, [attendanceRate, targetAchieved, prevRate]);
-
-  // Ensure currentDate is a Date object
-  const dateObj =
-    currentDate instanceof Date ? currentDate : new Date(currentDate);
+    // Update the threshold state for the next change
+    setWasAboveThreshold(targetAchieved);
+  }, [targetAchieved, wasAboveThreshold]);
 
   // Format month and year
   const monthYearStr = format(dateObj, "MMMM yyyy");
