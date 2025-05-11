@@ -96,7 +96,7 @@ const Calendar = () => {
               }`}
             />
           </div>
-          <span>Holiday</span>
+          <span>Mark Holiday</span>
         </button>
       </div>
 
@@ -128,6 +128,7 @@ const Calendar = () => {
           const { isHoliday, holidayName } = bankHolidayCheck;
           const isWeekendDay = isWeekend(day);
           const isNonWorking = isWeekendDay || isHoliday;
+          const isTodayDate = isToday(day);
 
           // Determine classes based on various conditions
           let dayClasses =
@@ -155,7 +156,7 @@ const Calendar = () => {
           }
 
           // Add outline for today
-          if (isToday(day)) {
+          if (isTodayDate) {
             dayClasses += " ring-2 ring-blue-500";
           }
 
@@ -184,6 +185,11 @@ const Calendar = () => {
 
       {/* Legend */}
       <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-3 justify-center text-xs text-gray-600">
+        {/* First row: Status of days */}
+        <div className="flex items-center">
+          <div className="w-3 h-3 rounded-full bg-white border border-gray-300 mr-1"></div>
+          <span>Available</span>
+        </div>
         <div className="flex items-center">
           <div className="w-3 h-3 rounded-full bg-emerald-500 mr-1"></div>
           <span>Attended</span>
@@ -196,10 +202,8 @@ const Calendar = () => {
           <div className="w-3 h-3 rounded-full bg-purple-50 border border-purple-500 mr-1"></div>
           <span>Bank Holiday</span>
         </div>
-        <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-white border border-gray-300 mr-1"></div>
-          <span>Available</span>
-        </div>
+
+        {/* Second row: Day types and indicators */}
         <div className="flex items-center">
           <div
             className="w-3 h-3 rounded-full bg-white text-red-500 border border-gray-300 mr-1 flex items-center justify-center"
@@ -208,6 +212,10 @@ const Calendar = () => {
             S
           </div>
           <span>Weekend</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-3 h-3 rounded-full bg-white border-2 border-blue-500 mr-1"></div>
+          <span>Today</span>
         </div>
       </div>
 
