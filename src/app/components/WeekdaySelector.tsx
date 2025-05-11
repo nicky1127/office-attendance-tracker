@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useAttendanceStore } from "@/utils/attendanceStore";
 
 const WeekdaySelector = () => {
-  const { markWeekday, selectedWeekday, resetWeekdaySelection } =
-    useAttendanceStore();
+  const { markWeekday, selectedWeekday } = useAttendanceStore();
   const [isOpen, setIsOpen] = useState(false);
 
   const weekdays = [
@@ -16,21 +15,13 @@ const WeekdaySelector = () => {
     { id: "friday", label: "Fridays" },
   ];
 
-  const handleWeekdaySelect = (weekday: string | null) => {
-    if (weekday === null) {
-      resetWeekdaySelection();
-    } else {
-      markWeekday(weekday as any);
-    }
+  const handleWeekdaySelect = (weekday: string) => {
+    markWeekday(weekday as any);
     setIsOpen(false);
   };
 
-  const getSelectedWeekdayLabel = () => {
-    if (!selectedWeekday) return "Mark specific weekday";
-    return `All ${
-      selectedWeekday.charAt(0).toUpperCase() + selectedWeekday.slice(1)
-    }s`;
-  };
+  // Always display "Mark specific weekday" regardless of selection
+  const dropdownLabel = "Mark specific weekday";
 
   return (
     <div className="relative mb-4">
@@ -38,7 +29,7 @@ const WeekdaySelector = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between bg-white rounded-lg shadow-sm p-3 text-gray-800 hover:bg-gray-50 transition-colors"
       >
-        <span className="flex-1 text-left">{getSelectedWeekdayLabel()}</span>
+        <span className="flex-1 text-left">{dropdownLabel}</span>
         <svg
           className={`min-w-5 min-h-5 w-5 h-5 transition-transform duration-200 ${
             isOpen ? "transform rotate-180" : ""
@@ -60,17 +51,7 @@ const WeekdaySelector = () => {
       </button>
 
       {isOpen && (
-        <div
-          className="absolute z-20 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 debug-dropdown"
-          style={{
-            backgroundColor: "white" /* Inline style as backup */,
-            borderRadius: "0.5rem",
-            boxShadow:
-              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-            border: "1px solid #e5e7eb",
-          }}
-        >
-          {" "}
+        <div className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200">
           <ul>
             {weekdays.map((weekday) => (
               <li key={weekday.id}>
@@ -86,16 +67,6 @@ const WeekdaySelector = () => {
                 </button>
               </li>
             ))}
-            {selectedWeekday && (
-              <li>
-                <button
-                  onClick={() => handleWeekdaySelect(null)}
-                  className="w-full text-left p-3 text-red-500 hover:bg-gray-100"
-                >
-                  Clear weekday selection
-                </button>
-              </li>
-            )}
           </ul>
         </div>
       )}

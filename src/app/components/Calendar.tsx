@@ -17,7 +17,7 @@ import {
   isBankHoliday,
   getBankHolidaysBetweenDates,
 } from "@/utils/bankHolidays";
-import { Briefcase, Umbrella } from "lucide-react";
+import { Briefcase, Palmtree, SunMedium } from "lucide-react";
 
 const Calendar = () => {
   const {
@@ -66,23 +66,37 @@ const Calendar = () => {
           onClick={() => setMode("attend")}
           className={`flex-1 py-2 px-4 flex items-center justify-center space-x-2 text-sm ${
             mode === "attend"
-              ? "bg-emerald-500 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-50"
+              ? "bg-gradient-to-r from-teal-600 to-emerald-400 text-white"
+              : "bg-white text-gray-700 hover:bg-emerald-50"
           }`}
         >
-          <Briefcase size={16} />
+          <Briefcase
+            size={16}
+            className={mode === "attend" ? "text-white" : "text-emerald-700"}
+          />
           <span>Mark Attendance</span>
         </button>
         <button
           onClick={() => setMode("leave")}
           className={`flex-1 py-2 px-4 flex items-center justify-center space-x-2 text-sm ${
             mode === "leave"
-              ? "bg-amber-500 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-50"
+              ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white"
+              : "bg-white text-gray-700 hover:bg-orange-50"
           }`}
         >
-          <Umbrella size={16} />
-          <span>Mark Leave</span>
+          <div className="relative">
+            <Palmtree
+              size={16}
+              className={mode === "leave" ? "text-white" : "text-amber-700"}
+            />
+            <SunMedium
+              size={10}
+              className={`absolute -top-1 -right-1 ${
+                mode === "leave" ? "text-yellow-300" : "text-amber-500"
+              }`}
+            />
+          </div>
+          <span>Holiday</span>
         </button>
       </div>
 
@@ -161,7 +175,7 @@ const Calendar = () => {
                 <span className="absolute top-0 right-0 w-2 h-2 bg-purple-500 rounded-full"></span>
               )}
               {isLeave && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-amber-500 rounded-full"></span>
+                <span className="absolute top-0 right-0 w-2 h-2 bg-orange-400 rounded-full"></span>
               )}
             </div>
           );
@@ -176,7 +190,7 @@ const Calendar = () => {
         </div>
         <div className="flex items-center">
           <div className="w-3 h-3 rounded-full bg-amber-100 border border-amber-500 mr-1"></div>
-          <span>Annual Leave</span>
+          <span>Holiday</span>
         </div>
         <div className="flex items-center">
           <div className="w-3 h-3 rounded-full bg-purple-50 border border-purple-500 mr-1"></div>

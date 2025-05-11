@@ -27,7 +27,7 @@ export default function Home() {
           <h1 className="text-2xl font-bold text-indigo-900">
             Office Attendance Tracker
           </h1>
-          <p className="text-gray-600">Track your days in the office</p>
+          <p className="text-gray-600">Track my days in the office</p>
         </header>
 
         <div className="space-y-4">
