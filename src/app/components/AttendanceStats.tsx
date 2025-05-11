@@ -1,8 +1,10 @@
 "use client";
 
 import { format } from "date-fns";
+import { useState } from "react";
 import { useAttendanceStore } from "@/utils/attendanceStore";
 import { countWorkdaysInMonth } from "@/utils/dateUtils";
+import { Trash2 } from "lucide-react";
 
 const AttendanceStats = () => {
   const {
@@ -11,7 +13,10 @@ const AttendanceStats = () => {
     annualLeaveDays,
     getAttendanceRate,
     getDaysNeededForMinRate,
+    resetCurrentMonth,
   } = useAttendanceStore();
+
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Calculate stats
   const attendanceRate = getAttendanceRate();
@@ -21,6 +26,9 @@ const AttendanceStats = () => {
   // Ensure currentDate is a Date object
   const dateObj =
     currentDate instanceof Date ? currentDate : new Date(currentDate);
+
+  // Format month and year
+  const monthYearStr = format(dateObj, "MMMM yyyy");
 
   // Count marked days in current month
   const monthStr = format(dateObj, "yyyy-MM");
@@ -39,22 +47,48 @@ const AttendanceStats = () => {
   // Calculate available workdays (excluding annual leave)
   const availableWorkdays = totalWorkdays - leaveDaysCount;
 
-  // Calculate progress bar width
-  const progressWidth = `${Math.min(100, Number(formattedRate))}%`;
-
-  // Determine progress bar color based on rate
-  let progressColor = "bg-red-500";
-  if (attendanceRate >= 0.4) {
-    progressColor = "bg-green-500";
-  } else if (attendanceRate >= 0.3) {
-    progressColor = "bg-yellow-500";
-  }
+  // Handle reset
+  const handleReset = () => {
+    if (showResetConfirm) {
+      resetCurrentMonth();
+      setShowResetConfirm(false);
+    } else {
+      setShowResetConfirm(true);
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-      <h2 className="text-lg font-medium text-gray-800 mb-3">
-        Office Attendance
-      </h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-medium text-gray-800">Office Attendance</h2>
+
+        {/* Reset button */}
+        {!showResetConfirm ? (
+          <button
+            onClick={handleReset}
+            className="flex items-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label={`Reset ${monthYearStr}`}
+          >
+            <Trash2 size={14} className="flex-shrink-0" />
+            <div className="ml-1 mt-0.5">Reset {monthYearStr}</div>
+          </button>
+        ) : (
+          <div className="flex items-center space-x-2 text-xs">
+            <button
+              onClick={() => setShowResetConfirm(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleReset}
+              className="text-red-500 hover:text-red-700"
+            >
+              Confirm
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Rate display */}
       <div className="mb-3">
@@ -64,8 +98,14 @@ const AttendanceStats = () => {
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2.5">
           <div
-            className={`${progressColor} h-2.5 rounded-full transition-all duration-500`}
-            style={{ width: progressWidth }}
+            className={`${
+              attendanceRate >= 0.4
+                ? "bg-green-500"
+                : attendanceRate >= 0.3
+                ? "bg-yellow-500"
+                : "bg-red-500"
+            } h-2.5 rounded-full transition-all duration-500`}
+            style={{ width: `${Math.min(100, Number(formattedRate))}%` }}
           ></div>
         </div>
       </div>

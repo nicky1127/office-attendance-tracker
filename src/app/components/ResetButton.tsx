@@ -28,27 +28,27 @@ const ResetButton = () => {
       {!showConfirm ? (
         <button
           onClick={handleReset}
-          className="flex items-center justify-center space-x-2 bg-white text-red-500 border border-red-200 hover:bg-red-50 rounded-lg px-4 py-3 w-full shadow-sm transition-colors"
+          className="flex items-center justify-center text-xs text-gray-500 hover:text-gray-700 transition-colors mx-auto"
           aria-label="Reset month"
         >
-          <Trash2 size={16} />
+          <Trash2 size={14} className="mr-1 text-gray-400" />
           <span>Reset {monthName}</span>
         </button>
       ) : (
-        <div className="flex flex-col space-y-2">
-          <p className="text-center text-sm text-gray-700 mb-1">
+        <div className="text-center">
+          <p className="text-xs text-gray-600 mb-2">
             Clear all marked days for {monthName}?
           </p>
-          <div className="flex space-x-2">
+          <div className="flex space-x-3 justify-center">
             <button
               onClick={() => setShowConfirm(false)}
-              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg px-4 py-2 transition-colors"
+              className="text-xs py-1 px-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleReset}
-              className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-lg px-4 py-2 transition-colors"
+              className="text-xs py-1 px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded transition-colors"
             >
               Confirm
             </button>
