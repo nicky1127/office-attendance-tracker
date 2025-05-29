@@ -10,6 +10,9 @@ import {
   endOfMonth,
   eachDayOfInterval,
   getDay,
+  addDays,
+  subDays,
+  getDate,
 } from "date-fns";
 import { useAttendanceStore } from "@/utils/attendanceStore";
 import { generateCalendarDays, isNonWorkingDay } from "@/utils/dateUtils";
@@ -17,19 +20,27 @@ import {
   isBankHoliday,
   getBankHolidaysBetweenDates,
 } from "@/utils/bankHolidays";
-import { Briefcase, Palmtree, SunMedium } from "lucide-react";
+import {
+  Briefcase,
+  Palmtree,
+  SunMedium,
+  Heart,
+  Thermometer,
+} from "lucide-react";
 
 const Calendar = () => {
   const {
     currentDate,
     attendedDays,
     annualLeaveDays,
+    sickLeaveDays,
     toggleDay,
     toggleAnnualLeave,
+    toggleSickLeave,
   } = useAttendanceStore();
 
-  // Mode state: 'attend' or 'leave'
-  const [mode, setMode] = useState<"attend" | "leave">("attend");
+  // Mode state: 'attend', 'leave', or 'sick'
+  const [mode, setMode] = useState<"attend" | "leave" | "sick">("attend");
 
   // Ensure currentDate is a Date object
   const dateObj =
@@ -47,6 +58,38 @@ const Calendar = () => {
     return getBankHolidaysBetweenDates(monthStart, monthEnd);
   }, [dateObj]);
 
+  // Generate dates for blank slots (previous and next month dates)
+  const calendarDaysWithDates = useMemo(() => {
+    const monthStart = startOfMonth(dateObj);
+    const monthEnd = endOfMonth(dateObj);
+
+    // Get the day of the week for the first day of the month
+    const startDay = getDay(monthStart);
+    const mondayAdjustedStartDay = startDay === 0 ? 6 : startDay - 1;
+
+    // Calculate previous month dates for empty slots
+    const prevMonthDates = [];
+    for (let i = mondayAdjustedStartDay - 1; i >= 0; i--) {
+      prevMonthDates.push(subDays(monthStart, i + 1));
+    }
+
+    // Get all days in current month
+    const currentMonthDates = eachDayOfInterval({
+      start: monthStart,
+      end: monthEnd,
+    });
+
+    // Calculate next month dates to fill the grid (if needed)
+    const totalSlotsUsed = prevMonthDates.length + currentMonthDates.length;
+    const remainingSlots = 42 - totalSlotsUsed; // 6 rows × 7 days = 42 slots
+    const nextMonthDates = [];
+    for (let i = 1; i <= remainingSlots && remainingSlots <= 14; i++) {
+      nextMonthDates.push(addDays(monthEnd, i));
+    }
+
+    return [...prevMonthDates, ...currentMonthDates, ...nextMonthDates];
+  }, [dateObj]);
+
   // Handle day click based on current mode
   const handleDayClick = (dateStr: string, isNonWorking: boolean) => {
     if (isNonWorking) return; // Don't allow clicking on non-working days
@@ -55,6 +98,8 @@ const Calendar = () => {
       toggleDay(dateStr);
     } else if (mode === "leave") {
       toggleAnnualLeave(dateStr);
+    } else if (mode === "sick") {
+      toggleSickLeave(dateStr);
     }
   };
 
@@ -64,39 +109,72 @@ const Calendar = () => {
       <div className="flex mb-4 border border-gray-200 rounded-lg overflow-hidden">
         <button
           onClick={() => setMode("attend")}
-          className={`flex-1 py-2 px-4 flex items-center justify-center space-x-2 text-sm ${
+          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "attend"
               ? "bg-gradient-to-r from-teal-600 to-emerald-400 text-white"
-              : "bg-white text-gray-700 hover:bg-emerald-50"
+              : "bg-white text-gray-700"
           }`}
         >
           <Briefcase
-            size={16}
+            size={14}
             className={mode === "attend" ? "text-white" : "text-emerald-700"}
           />
-          <span>Mark Attendance</span>
+          <span className="hidden sm:inline">Mark Attendance</span>
+          <span className="sm:hidden">Attend</span>
         </button>
+
+        {/* Separator */}
+        <div className="w-px bg-gray-200"></div>
+
         <button
           onClick={() => setMode("leave")}
-          className={`flex-1 py-2 px-4 flex items-center justify-center space-x-2 text-sm ${
+          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "leave"
               ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white"
-              : "bg-white text-gray-700 hover:bg-orange-50"
+              : "bg-white text-gray-700"
           }`}
         >
           <div className="relative">
             <Palmtree
-              size={16}
+              size={14}
               className={mode === "leave" ? "text-white" : "text-amber-700"}
             />
             <SunMedium
-              size={10}
+              size={8}
               className={`absolute -top-1 -right-1 ${
                 mode === "leave" ? "text-yellow-300" : "text-amber-500"
               }`}
             />
           </div>
-          <span>Mark Holiday</span>
+          <span className="hidden sm:inline">Mark Holiday</span>
+          <span className="sm:hidden">Holiday</span>
+        </button>
+
+        {/* Separator */}
+        <div className="w-px bg-gray-200"></div>
+
+        <button
+          onClick={() => setMode("sick")}
+          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
+            mode === "sick"
+              ? "bg-gradient-to-r from-red-400 to-pink-400 text-white"
+              : "bg-white text-gray-700"
+          }`}
+        >
+          <div className="relative">
+            <Heart
+              size={14}
+              className={mode === "sick" ? "text-white" : "text-red-700"}
+            />
+            <Thermometer
+              size={8}
+              className={`absolute -top-1 -right-1 ${
+                mode === "sick" ? "text-red-200" : "text-red-500"
+              }`}
+            />
+          </div>
+          <span className="hidden sm:inline">Mark Sick</span>
+          <span className="sm:hidden">Sick</span>
         </button>
       </div>
 
@@ -114,21 +192,21 @@ const Calendar = () => {
         ))}
 
         {/* Calendar days */}
-        {calendarDays.map((day, index) => {
-          // Handle empty slots (null days)
-          if (day === null) {
-            return <div key={`empty-${index}`} className="p-1"></div>;
-          }
-
+        {calendarDaysWithDates.map((day, index) => {
           const dateStr = format(day, "yyyy-MM-dd");
           const isAttended = !!attendedDays[dateStr];
           const isLeave = !!annualLeaveDays[dateStr];
+          const isSick = !!sickLeaveDays[dateStr];
           const isCurrentMonth = isSameMonth(day, dateObj);
           const bankHolidayCheck = isBankHoliday(day);
           const { isHoliday, holidayName } = bankHolidayCheck;
           const isWeekendDay = isWeekend(day);
           const isNonWorking = isWeekendDay || isHoliday;
           const isTodayDate = isToday(day);
+          const dayNumber = getDate(day);
+
+          // Check if this is the first day of a month (for month indicator)
+          const isFirstOfMonth = dayNumber === 1;
 
           // Determine classes based on various conditions
           let dayClasses =
@@ -136,47 +214,84 @@ const Calendar = () => {
 
           // Base styling for different day states
           if (!isCurrentMonth) {
-            dayClasses += " opacity-30";
+            dayClasses += " opacity-40 text-gray-400";
           }
 
           // Sunday and Saturday for weekend styling
           const dayOfWeek = getDay(day);
           const isSundayOrSaturday = dayOfWeek === 0 || dayOfWeek === 6;
 
-          if (isSundayOrSaturday) {
-            dayClasses += " text-red-500";
-          } else if (isHoliday) {
-            dayClasses += " text-purple-500 bg-purple-50 opacity-80";
-          } else if (isLeave) {
-            dayClasses += " bg-amber-100 text-amber-800";
-          } else if (isAttended) {
-            dayClasses += " bg-emerald-500 text-white";
+          if (isCurrentMonth) {
+            if (isSundayOrSaturday) {
+              dayClasses += " text-red-500";
+            } else if (isHoliday) {
+              dayClasses += " text-purple-500 bg-purple-50 opacity-80";
+            } else if (isSick) {
+              dayClasses += " bg-red-100 text-red-800";
+            } else if (isLeave) {
+              dayClasses += " bg-amber-100 text-amber-800";
+            } else if (isAttended) {
+              dayClasses += " bg-emerald-500 text-white";
+            } else {
+              dayClasses += " bg-white hover:bg-emerald-100 text-gray-700";
+            }
           } else {
-            dayClasses += " bg-white hover:bg-emerald-100 text-gray-700";
+            // For non-current month dates, just show as muted
+            if (isSundayOrSaturday) {
+              dayClasses += " text-red-300";
+            }
           }
 
-          // Add outline for today
-          if (isTodayDate) {
-            dayClasses += " ring-2 ring-blue-500";
+          // Add styling for today - thick inset blue ring
+          if (isTodayDate && isCurrentMonth) {
+            dayClasses += " ring-inset ring-4 ring-blue-500";
+          } else if (isTodayDate) {
+            // Today in different month - subtle inset ring
+            dayClasses += " ring-inset ring-2 ring-blue-300";
           }
 
           return (
             <div
               key={dateStr}
               className={`${dayClasses} ${
-                isNonWorking ? "cursor-not-allowed" : "cursor-pointer"
+                isNonWorking || !isCurrentMonth
+                  ? "cursor-default"
+                  : "cursor-pointer"
               }`}
-              onClick={() => handleDayClick(dateStr, isNonWorking)}
+              onClick={() =>
+                isCurrentMonth && handleDayClick(dateStr, isNonWorking)
+              }
               title={
-                isHoliday ? holidayName : isLeave ? "Annual Leave" : undefined
+                isHoliday
+                  ? holidayName
+                  : isSick
+                  ? "Sick Leave"
+                  : isLeave
+                  ? "Annual Leave"
+                  : !isCurrentMonth
+                  ? format(day, "MMM d, yyyy")
+                  : undefined
               }
             >
-              {format(day, "d")}
-              {isHoliday && (
+              {/* Day number with optional month indicator */}
+              <div className="flex flex-col items-center justify-center">
+                {isFirstOfMonth && (
+                  <span className="text-xs text-gray-500 leading-none mb-0.5">
+                    {format(day, "MMM")}
+                  </span>
+                )}
+                <span className="leading-none">{dayNumber}</span>
+              </div>
+
+              {/* Status indicators */}
+              {isCurrentMonth && isHoliday && (
                 <span className="absolute top-0 right-0 w-2 h-2 bg-purple-500 rounded-full"></span>
               )}
-              {isLeave && (
+              {isCurrentMonth && isLeave && (
                 <span className="absolute top-0 right-0 w-2 h-2 bg-orange-400 rounded-full"></span>
+              )}
+              {isCurrentMonth && isSick && (
+                <span className="absolute top-0 right-0 w-2 h-2 bg-red-400 rounded-full"></span>
               )}
             </div>
           );
@@ -199,6 +314,10 @@ const Calendar = () => {
           <span>Holiday</span>
         </div>
         <div className="flex items-center">
+          <div className="w-3 h-3 rounded-full bg-red-100 border border-red-500 mr-1"></div>
+          <span>Sick Leave</span>
+        </div>
+        <div className="flex items-center">
           <div className="w-3 h-3 rounded-full bg-purple-50 border border-purple-500 mr-1"></div>
           <span>Bank Holiday</span>
         </div>
@@ -214,7 +333,7 @@ const Calendar = () => {
           <span>Weekend</span>
         </div>
         <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-white border-2 border-blue-500 mr-1"></div>
+          <div className="w-3 h-3 rounded-full bg-white border-4 border-blue-500 mr-1"></div>
           <span>Today</span>
         </div>
       </div>
