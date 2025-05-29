@@ -33,8 +33,6 @@ const v2_0_0: ChangelogContent = {
     "Month indicators for better navigation",
     "Cleaner period toggle buttons",
     "Enhanced 'today' date highlighting",
-    "Simplified month picker without attendance colors",
-    "Better visual separation in button groups",
   ],
 };
 

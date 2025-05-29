@@ -104,13 +104,15 @@ const VersionChangelog = ({
           {/* Improvements */}
           <div>
             <h4 className="font-semibold text-gray-800 mb-3">Improvements</h4>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {changelogContent.improvements.map((improvement, index) => (
-                <li key={index} className="flex items-start space-x-2 text-sm">
-                  <span className="text-emerald-500 mt-1.5 flex-shrink-0">
+                <li key={index} className="flex items-start">
+                  <span className="text-emerald-500 mr-3 mt-1 flex-shrink-0 text-lg leading-none">
                     •
                   </span>
-                  <span className="text-gray-600">{improvement}</span>
+                  <span className="text-gray-600 text-sm leading-relaxed">
+                    {improvement}
+                  </span>
                 </li>
               ))}
             </ul>
