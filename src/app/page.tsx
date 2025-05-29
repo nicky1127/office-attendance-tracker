@@ -30,7 +30,7 @@ export default function Home() {
             <h1 className="font-heading text-3xl font-bold bg-gradient-to-r from-teal-600 to-indigo-600 bg-clip-text text-transparent drop-shadow-sm">
               Office Attendance Tracker
             </h1>
-            <p className="text-gray-600 mt-1">Track my days in the office</p>
+            <p className="text-gray-600 mt-1">Track my days in the office </p>
           </div>
         </header>
 
