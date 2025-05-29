@@ -47,13 +47,13 @@ const VersionChangelog = ({
       onClick={handleClose}
     >
       <div
-        className={`bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden transform transition-all duration-200 ${
+        className={`bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden transform transition-all duration-200 ${
           isVisible ? "scale-100 opacity-100" : "scale-95 opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="bg-gradient-to-r from-teal-600 to-indigo-600 text-white p-6 relative">
+        {/* Header - Fixed */}
+        <div className="bg-gradient-to-r from-teal-600 to-indigo-600 text-white p-6 relative flex-shrink-0">
           <button
             onClick={handleClose}
             className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
@@ -76,8 +76,8 @@ const VersionChangelog = ({
           </h3>
         </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[60vh]">
+        {/* Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto p-6">
           {/* Key Features */}
           <div className="mb-6">
             <h4 className="font-semibold text-gray-800 mb-3">Key Features</h4>
@@ -119,8 +119,8 @@ const VersionChangelog = ({
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-6 bg-gray-50 border-t border-gray-100">
+        {/* Footer - Fixed */}
+        <div className="p-6 bg-gray-50 border-t border-gray-100 flex-shrink-0">
           <button
             onClick={handleClose}
             className="w-full bg-gradient-to-r from-teal-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-medium transition-all hover:from-teal-700 hover:to-indigo-700"
