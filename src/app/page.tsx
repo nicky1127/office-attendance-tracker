@@ -5,12 +5,13 @@ import MonthYearPicker from "./components/MonthYearPicker";
 import Calendar from "./components/Calendar";
 import AttendanceStats from "./components/AttendanceStats";
 import WeekdaySelector from "./components/WeekdaySelector";
-import AnnualLeaveSummary from "./components/AnnualLeaveSummary";
+import LeaveSummary from "./components/LeaveSummary";
 import AppIcon from "./components/AppIcon";
 import { useAttendanceStore } from "@/utils/attendanceStore";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const { periodLength } = useAttendanceStore();
 
   // Wait for component to mount to avoid hydration issues with persisted store
   useEffect(() => {
@@ -37,13 +38,17 @@ export default function Home() {
         <div className="space-y-4">
           <MonthYearPicker />
           <AttendanceStats />
-          <AnnualLeaveSummary />
+          <LeaveSummary />
           <WeekdaySelector />
           <Calendar />
 
           <div className="pt-4 text-center text-xs text-gray-500">
             <p>Tap on days to mark office attendance</p>
             <p>Target: Minimum 40% office attendance rate</p>
+            <p className="mt-1 text-gray-400">
+              Rate calculated over rolling {periodLength}-week periods ending on
+              Fridays
+            </p>
           </div>
         </div>
       </div>

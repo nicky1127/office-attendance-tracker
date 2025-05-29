@@ -9,6 +9,11 @@ import {
   isSameMonth,
   isWeekend,
   addDays,
+  subDays,
+  isFriday,
+  startOfWeek,
+  endOfWeek,
+  subWeeks,
 } from "date-fns";
 
 // Generate days for calendar view with Monday as the first day of the week
@@ -92,3 +97,103 @@ export const countWorkdaysInMonth = (date: Date): number => {
   // Filter out weekends and bank holidays
   return daysInMonth.filter((day) => !isNonWorkingDay(day)).length;
 };
+
+// Type for period length
+export type PeriodLength = 4 | 12;
+
+// Get the end date for the period (last Friday or today if today is Friday)
+export const getPeriodEndDate = (referenceDate: Date = new Date()): Date => {
+  const today = new Date();
+
+  // If today is Friday, use today as the end date
+  if (isFriday(today)) {
+    return today;
+  }
+
+  // Otherwise, find the most recent Friday
+  let currentDate = new Date(today);
+  while (!isFriday(currentDate)) {
+    currentDate = subDays(currentDate, 1);
+  }
+
+  return currentDate;
+};
+
+// Get the start date for the period (exactly N weeks before the end date)
+export const getPeriodStartDate = (
+  weeks: PeriodLength,
+  endDate?: Date
+): Date => {
+  const end = endDate || getPeriodEndDate();
+
+  // Calculate days back: (weeks * 7) - 1 to get exactly N weeks
+  const daysBack = weeks * 7 - 1;
+  const startDate = subDays(end, daysBack);
+
+  return startDate;
+};
+
+// Get the current period dates
+export const getCurrentPeriod = (weeks: PeriodLength) => {
+  const endDate = getPeriodEndDate();
+  const startDate = getPeriodStartDate(weeks, endDate);
+
+  return {
+    startDate,
+    endDate,
+    totalDays:
+      Math.floor(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1,
+    weeks,
+  };
+};
+
+// Count workdays in the period (excluding weekends and bank holidays)
+export const countWorkdaysInPeriod = (weeks: PeriodLength): number => {
+  const { startDate, endDate } = getCurrentPeriod(weeks);
+  const daysInPeriod = eachDayOfInterval({ start: startDate, end: endDate });
+
+  // Filter out weekends and bank holidays
+  return daysInPeriod.filter((day) => !isNonWorkingDay(day)).length;
+};
+
+// Get all dates in the current period as strings
+export const getPeriodDateStrings = (weeks: PeriodLength): string[] => {
+  const { startDate, endDate } = getCurrentPeriod(weeks);
+  const daysInPeriod = eachDayOfInterval({ start: startDate, end: endDate });
+
+  return daysInPeriod.map((day) => format(day, "yyyy-MM-dd"));
+};
+
+// Check if a date string is within the current period
+export const isDateInCurrentPeriod = (
+  dateStr: string,
+  weeks: PeriodLength
+): boolean => {
+  const { startDate, endDate } = getCurrentPeriod(weeks);
+  const date = parseDate(dateStr);
+
+  return date >= startDate && date <= endDate;
+};
+
+// Get formatted period string for display
+export const getPeriodDisplayString = (weeks: PeriodLength): string => {
+  const { startDate, endDate } = getCurrentPeriod(weeks);
+
+  const startStr = format(startDate, "MMM d");
+  const endStr = format(endDate, "MMM d, yyyy");
+
+  return `${startStr} - ${endStr}`;
+};
+
+// Legacy functions for backward compatibility (4-week specific)
+export const getFourWeekPeriodEndDate = getPeriodEndDate;
+export const getFourWeekPeriodStartDate = (endDate?: Date) =>
+  getPeriodStartDate(4, endDate);
+export const getCurrentFourWeekPeriod = () => getCurrentPeriod(4);
+export const countWorkdaysInFourWeekPeriod = () => countWorkdaysInPeriod(4);
+export const getFourWeekPeriodDateStrings = () => getPeriodDateStrings(4);
+export const isDateInCurrentFourWeekPeriod = (dateStr: string) =>
+  isDateInCurrentPeriod(dateStr, 4);
+export const getFourWeekPeriodDisplayString = () => getPeriodDisplayString(4);

@@ -16,7 +16,14 @@ import {
   parseISO,
   getDaysInMonth,
 } from "date-fns";
-import { isNonWorkingDay } from "./dateUtils";
+import {
+  isNonWorkingDay,
+  countWorkdaysInPeriod,
+  getPeriodDateStrings,
+  isDateInCurrentPeriod,
+  getCurrentPeriod,
+  PeriodLength,
+} from "./dateUtils";
 import { isBankHoliday } from "./bankHolidays";
 
 type WeekdayOption =
@@ -28,27 +35,48 @@ type WeekdayOption =
   | null;
 
 interface AttendanceState {
-  // Current month and year
+  // Current month and year (for calendar display)
   currentDate: Date;
+  // Period length (4 or 12 weeks)
+  periodLength: PeriodLength;
   // Days marked as attended
   attendedDays: Record<string, boolean>;
   // Days marked as annual leave
   annualLeaveDays: Record<string, boolean>;
+  // Days marked as sick leave
+  sickLeaveDays: Record<string, boolean>;
   // Selected weekday option
   selectedWeekday: WeekdayOption;
 
   // Actions
   setCurrentDate: (date: Date) => void;
+  setPeriodLength: (weeks: PeriodLength) => void;
   nextMonth: () => void;
   prevMonth: () => void;
   toggleDay: (dateStr: string) => void;
   toggleAnnualLeave: (dateStr: string) => void;
+  toggleSickLeave: (dateStr: string) => void;
   markWeekday: (weekday: WeekdayOption) => void;
   resetCurrentMonth: () => void;
+  resetCurrentPeriod: () => void;
 
-  // Calculations
+  // Calculations (based on current period length)
   getAttendanceRate: () => number;
   getDaysNeededForMinRate: (minRate?: number) => number;
+  getPeriodStats: () => {
+    totalWorkdays: number;
+    attendedDays: number;
+    annualLeaveDays: number;
+    sickLeaveDays: number;
+    availableWorkdays: number;
+    attendanceRate: number;
+    periodDates: { startDate: Date; endDate: Date };
+    weeks: PeriodLength;
+  };
+
+  // Legacy functions for backward compatibility
+  getFourWeekPeriodStats: () => ReturnType<AttendanceState["getPeriodStats"]>;
+  resetCurrentFourWeekPeriod: () => void;
 }
 
 const isWeekdayFunc = (date: Date, weekday: WeekdayOption): boolean => {
@@ -64,11 +92,15 @@ export const useAttendanceStore = create<AttendanceState>()(
   persist(
     (set, get) => ({
       currentDate: new Date(),
+      periodLength: 4, // Default to 4 weeks
       attendedDays: {},
       annualLeaveDays: {},
+      sickLeaveDays: {},
       selectedWeekday: null,
 
       setCurrentDate: (date) => set({ currentDate: date }),
+
+      setPeriodLength: (weeks) => set({ periodLength: weeks }),
 
       nextMonth: () => {
         const { currentDate } = get();
@@ -94,10 +126,10 @@ export const useAttendanceStore = create<AttendanceState>()(
           return;
         }
 
-        const { attendedDays, annualLeaveDays } = get();
+        const { attendedDays, annualLeaveDays, sickLeaveDays } = get();
 
-        // If the day is marked as annual leave, don't allow marking as attended
-        if (annualLeaveDays[dateStr]) {
+        // If the day is marked as annual leave or sick leave, don't allow marking as attended
+        if (annualLeaveDays[dateStr] || sickLeaveDays[dateStr]) {
           return;
         }
 
@@ -124,7 +156,7 @@ export const useAttendanceStore = create<AttendanceState>()(
           return;
         }
 
-        const { annualLeaveDays, attendedDays } = get();
+        const { annualLeaveDays, attendedDays, sickLeaveDays } = get();
 
         // If day is already marked as annual leave, remove it
         if (annualLeaveDays[dateStr]) {
@@ -132,10 +164,15 @@ export const useAttendanceStore = create<AttendanceState>()(
           delete newAnnualLeaveDays[dateStr];
           set({ annualLeaveDays: newAnnualLeaveDays });
         } else {
-          // Add as annual leave and remove from attended days if present
+          // Add as annual leave and remove from attended days and sick leave if present
           const newAttendedDays = { ...attendedDays };
+          const newSickLeaveDays = { ...sickLeaveDays };
+
           if (newAttendedDays[dateStr]) {
             delete newAttendedDays[dateStr];
+          }
+          if (newSickLeaveDays[dateStr]) {
+            delete newSickLeaveDays[dateStr];
           }
 
           set({
@@ -144,6 +181,45 @@ export const useAttendanceStore = create<AttendanceState>()(
               [dateStr]: true,
             },
             attendedDays: newAttendedDays,
+            sickLeaveDays: newSickLeaveDays,
+          });
+        }
+      },
+
+      toggleSickLeave: (dateStr) => {
+        // Parse the date string to check if it's a non-working day
+        const date = parseISO(dateStr);
+        if (isNonWorkingDay(date)) {
+          // Don't toggle non-working days (weekends or bank holidays)
+          return;
+        }
+
+        const { sickLeaveDays, attendedDays, annualLeaveDays } = get();
+
+        // If day is already marked as sick leave, remove it
+        if (sickLeaveDays[dateStr]) {
+          const newSickLeaveDays = { ...sickLeaveDays };
+          delete newSickLeaveDays[dateStr];
+          set({ sickLeaveDays: newSickLeaveDays });
+        } else {
+          // Add as sick leave and remove from attended days and annual leave if present
+          const newAttendedDays = { ...attendedDays };
+          const newAnnualLeaveDays = { ...annualLeaveDays };
+
+          if (newAttendedDays[dateStr]) {
+            delete newAttendedDays[dateStr];
+          }
+          if (newAnnualLeaveDays[dateStr]) {
+            delete newAnnualLeaveDays[dateStr];
+          }
+
+          set({
+            sickLeaveDays: {
+              ...sickLeaveDays,
+              [dateStr]: true,
+            },
+            attendedDays: newAttendedDays,
+            annualLeaveDays: newAnnualLeaveDays,
           });
         }
       },
@@ -151,7 +227,8 @@ export const useAttendanceStore = create<AttendanceState>()(
       markWeekday: (weekday) => {
         if (!weekday) return;
 
-        const { currentDate, attendedDays, annualLeaveDays } = get();
+        const { currentDate, attendedDays, annualLeaveDays, sickLeaveDays } =
+          get();
         // Ensure currentDate is a Date object
         const dateObj =
           currentDate instanceof Date ? currentDate : new Date(currentDate);
@@ -176,15 +253,20 @@ export const useAttendanceStore = create<AttendanceState>()(
           const bankHolidayCheck = isBankHoliday(date);
           const notBankHoliday = !bankHolidayCheck.isHoliday;
 
-          // Get the date string to check for annual leave
+          // Get the date string to check for annual leave and sick leave
           const dateStr = format(date, "yyyy-MM-dd");
 
-          // Check if it's NOT an annual leave day
+          // Check if it's NOT an annual leave or sick leave day
           const notAnnualLeave = !annualLeaveDays[dateStr];
+          const notSickLeave = !sickLeaveDays[dateStr];
 
           // Only include days that match all criteria
           return (
-            isCorrectWeekday && notWeekend && notBankHoliday && notAnnualLeave
+            isCorrectWeekday &&
+            notWeekend &&
+            notBankHoliday &&
+            notAnnualLeave &&
+            notSickLeave
           );
         });
 
@@ -203,7 +285,8 @@ export const useAttendanceStore = create<AttendanceState>()(
       },
 
       resetCurrentMonth: () => {
-        const { currentDate, attendedDays, annualLeaveDays } = get();
+        const { currentDate, attendedDays, annualLeaveDays, sickLeaveDays } =
+          get();
 
         // Ensure currentDate is a Date object
         const dateObj =
@@ -212,117 +295,181 @@ export const useAttendanceStore = create<AttendanceState>()(
 
         // Filter out all days from the current month
         const newAttendedDays = { ...attendedDays };
+        const newAnnualLeaveDays = { ...annualLeaveDays };
+        const newSickLeaveDays = { ...sickLeaveDays };
+
         Object.keys(newAttendedDays).forEach((dateStr) => {
           if (dateStr.startsWith(yearMonth)) {
             delete newAttendedDays[dateStr];
           }
         });
 
-        // Also clear annual leave days for the current month
-        const newAnnualLeaveDays = { ...annualLeaveDays };
         Object.keys(newAnnualLeaveDays).forEach((dateStr) => {
           if (dateStr.startsWith(yearMonth)) {
             delete newAnnualLeaveDays[dateStr];
           }
         });
 
+        Object.keys(newSickLeaveDays).forEach((dateStr) => {
+          if (dateStr.startsWith(yearMonth)) {
+            delete newSickLeaveDays[dateStr];
+          }
+        });
+
         set({
           attendedDays: newAttendedDays,
           annualLeaveDays: newAnnualLeaveDays,
+          sickLeaveDays: newSickLeaveDays,
         });
+      },
+
+      resetCurrentPeriod: () => {
+        const { attendedDays, annualLeaveDays, sickLeaveDays, periodLength } =
+          get();
+        const periodDateStrings = getPeriodDateStrings(periodLength);
+
+        // Filter out all days from the current period
+        const newAttendedDays = { ...attendedDays };
+        const newAnnualLeaveDays = { ...annualLeaveDays };
+        const newSickLeaveDays = { ...sickLeaveDays };
+
+        periodDateStrings.forEach((dateStr) => {
+          delete newAttendedDays[dateStr];
+          delete newAnnualLeaveDays[dateStr];
+          delete newSickLeaveDays[dateStr];
+        });
+
+        set({
+          attendedDays: newAttendedDays,
+          annualLeaveDays: newAnnualLeaveDays,
+          sickLeaveDays: newSickLeaveDays,
+        });
+      },
+
+      getPeriodStats: () => {
+        const { attendedDays, annualLeaveDays, sickLeaveDays, periodLength } =
+          get();
+        const periodDateStrings = getPeriodDateStrings(periodLength);
+        const { startDate, endDate } = getCurrentPeriod(periodLength);
+
+        // Count total workdays in the period
+        const totalWorkdays = countWorkdaysInPeriod(periodLength);
+
+        // Count attended days in the period
+        const attendedDaysCount = periodDateStrings.filter(
+          (dateStr) => attendedDays[dateStr]
+        ).length;
+
+        // Count annual leave days in the period
+        const annualLeaveDaysCount = periodDateStrings.filter(
+          (dateStr) => annualLeaveDays[dateStr]
+        ).length;
+
+        // Count sick leave days in the period
+        const sickLeaveDaysCount = periodDateStrings.filter(
+          (dateStr) => sickLeaveDays[dateStr]
+        ).length;
+
+        // Calculate available workdays (excluding both annual leave and sick leave)
+        const availableWorkdays =
+          totalWorkdays - annualLeaveDaysCount - sickLeaveDaysCount;
+
+        // Calculate attendance rate
+        const attendanceRate =
+          availableWorkdays > 0 ? attendedDaysCount / availableWorkdays : 0;
+
+        return {
+          totalWorkdays,
+          attendedDays: attendedDaysCount,
+          annualLeaveDays: annualLeaveDaysCount,
+          sickLeaveDays: sickLeaveDaysCount,
+          availableWorkdays,
+          attendanceRate,
+          periodDates: { startDate, endDate },
+          weeks: periodLength,
+        };
       },
 
       getAttendanceRate: () => {
-        const { currentDate, attendedDays, annualLeaveDays } = get();
-        // Ensure currentDate is a Date object
-        const dateObj =
-          currentDate instanceof Date ? currentDate : new Date(currentDate);
-        const monthStart = startOfMonth(dateObj);
-        const monthEnd = endOfMonth(dateObj);
-
-        // Get all workdays in month (excluding weekends and bank holidays)
-        const daysInMonth = eachDayOfInterval({
-          start: monthStart,
-          end: monthEnd,
-        });
-        const workdaysInMonth = daysInMonth.filter(
-          (date) => !isNonWorkingDay(date)
-        );
-
-        // Get yearMonth string for filtering
-        const yearMonth = format(dateObj, "yyyy-MM");
-
-        // Get annual leave days in current month
-        const annualLeaveDaysInMonth = Object.keys(annualLeaveDays).filter(
-          (dateStr) => dateStr.startsWith(yearMonth)
-        ).length;
-
-        // Count attended days in current month
-        const attendedDaysInMonth = Object.keys(attendedDays).filter(
-          (dateStr) => dateStr.startsWith(yearMonth)
-        ).length;
-
-        // Calculate attendance rate (excluding annual leave days from the denominator)
-        const availableWorkdays =
-          workdaysInMonth.length - annualLeaveDaysInMonth;
-
-        // Prevent division by zero and ensure we don't exceed 100%
-        if (availableWorkdays === 0) return 1;
-        return Math.min(1, attendedDaysInMonth / availableWorkdays);
+        const stats = get().getPeriodStats();
+        return Math.min(1, stats.attendanceRate);
       },
 
       getDaysNeededForMinRate: (minRate = 0.4) => {
-        const { currentDate, attendedDays, annualLeaveDays } = get();
-        // Ensure currentDate is a Date object
-        const dateObj =
-          currentDate instanceof Date ? currentDate : new Date(currentDate);
-        const monthStart = startOfMonth(dateObj);
-        const monthEnd = endOfMonth(dateObj);
+        const stats = get().getPeriodStats();
 
-        // Get all workdays in month (excluding weekends and bank holidays)
-        const daysInMonth = eachDayOfInterval({
-          start: monthStart,
-          end: monthEnd,
-        });
-        const workdaysInMonth = daysInMonth.filter(
-          (date) => !isNonWorkingDay(date)
-        );
-
-        // Get yearMonth string for filtering
-        const yearMonth = format(dateObj, "yyyy-MM");
-
-        // Filter annual leave days to only include those in the current month
-        const annualLeaveDaysInMonthArr = Object.keys(annualLeaveDays).filter(
-          (dateStr) => dateStr.startsWith(yearMonth)
-        );
-
-        const annualLeaveDaysInMonth = annualLeaveDaysInMonthArr.length;
-
-        // Count attended days in current month
-        const attendedDaysInMonth = Object.keys(attendedDays).filter(
-          (dateStr) => dateStr.startsWith(yearMonth)
-        ).length;
-
-        // Calculate available workdays (excluding annual leave)
-        const availableWorkdays =
-          workdaysInMonth.length - annualLeaveDaysInMonth;
-
-        if (availableWorkdays <= 0) return 0; // No available days to work with
+        if (stats.availableWorkdays <= 0) return 0;
 
         // Calculate total days needed to reach minimum rate
-        const totalDaysNeeded = Math.ceil(availableWorkdays * minRate);
+        const totalDaysNeeded = Math.ceil(stats.availableWorkdays * minRate);
 
         // Calculate additional days needed
         const additionalDaysNeeded = Math.max(
           0,
-          totalDaysNeeded - attendedDaysInMonth
+          totalDaysNeeded - stats.attendedDays
         );
 
         // Make sure we don't exceed the available days
         return Math.min(
           additionalDaysNeeded,
-          availableWorkdays - attendedDaysInMonth
+          stats.availableWorkdays - stats.attendedDays
         );
+      },
+
+      // Legacy functions for backward compatibility
+      getFourWeekPeriodStats: () => {
+        const currentPeriod = get().periodLength;
+        // Temporarily get 4-week stats regardless of current setting
+        const { attendedDays, annualLeaveDays, sickLeaveDays } = get();
+        const periodDateStrings = getPeriodDateStrings(4);
+        const { startDate, endDate } = getCurrentPeriod(4);
+
+        const totalWorkdays = countWorkdaysInPeriod(4);
+        const attendedDaysCount = periodDateStrings.filter(
+          (dateStr) => attendedDays[dateStr]
+        ).length;
+        const annualLeaveDaysCount = periodDateStrings.filter(
+          (dateStr) => annualLeaveDays[dateStr]
+        ).length;
+        const sickLeaveDaysCount = periodDateStrings.filter(
+          (dateStr) => sickLeaveDays[dateStr]
+        ).length;
+        const availableWorkdays =
+          totalWorkdays - annualLeaveDaysCount - sickLeaveDaysCount;
+        const attendanceRate =
+          availableWorkdays > 0 ? attendedDaysCount / availableWorkdays : 0;
+
+        return {
+          totalWorkdays,
+          attendedDays: attendedDaysCount,
+          annualLeaveDays: annualLeaveDaysCount,
+          sickLeaveDays: sickLeaveDaysCount,
+          availableWorkdays,
+          attendanceRate,
+          periodDates: { startDate, endDate },
+          weeks: 4 as PeriodLength,
+        };
+      },
+
+      resetCurrentFourWeekPeriod: () => {
+        const { attendedDays, annualLeaveDays, sickLeaveDays } = get();
+        const fourWeekDateStrings = getPeriodDateStrings(4);
+
+        const newAttendedDays = { ...attendedDays };
+        const newAnnualLeaveDays = { ...annualLeaveDays };
+        const newSickLeaveDays = { ...sickLeaveDays };
+
+        fourWeekDateStrings.forEach((dateStr) => {
+          delete newAttendedDays[dateStr];
+          delete newAnnualLeaveDays[dateStr];
+          delete newSickLeaveDays[dateStr];
+        });
+
+        set({
+          attendedDays: newAttendedDays,
+          annualLeaveDays: newAnnualLeaveDays,
+          sickLeaveDays: newSickLeaveDays,
+        });
       },
     }),
     {
@@ -332,6 +479,10 @@ export const useAttendanceStore = create<AttendanceState>()(
         // Convert currentDate back to a Date object when rehydrating from storage
         if (state && typeof state.currentDate === "string") {
           state.currentDate = new Date(state.currentDate);
+        }
+        // Ensure periodLength has a default value
+        if (state && !state.periodLength) {
+          state.periodLength = 4;
         }
       },
     }
