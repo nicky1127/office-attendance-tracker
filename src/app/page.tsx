@@ -7,16 +7,40 @@ import AttendanceStats from "./components/AttendanceStats";
 import WeekdaySelector from "./components/WeekdaySelector";
 import LeaveSummary from "./components/LeaveSummary";
 import AppIcon from "./components/AppIcon";
+import VersionChangelog from "./components/VersionChangelog";
 import { useAttendanceStore } from "@/utils/attendanceStore";
+import { getCurrentVersion, isNewerVersion } from "@/utils/version";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
-  const { periodLength } = useAttendanceStore();
+  const [showChangelog, setShowChangelog] = useState(false);
+
+  const { periodLength, lastSeenVersion, setLastSeenVersion } =
+    useAttendanceStore();
+
+  // Get current version from package.json
+  const currentVersion = getCurrentVersion();
 
   // Wait for component to mount to avoid hydration issues with persisted store
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Check for version updates after mounting
+  useEffect(() => {
+    if (mounted) {
+      // Check if this is a newer version
+      if (isNewerVersion(currentVersion, lastSeenVersion)) {
+        setShowChangelog(true);
+      }
+    }
+  }, [mounted, currentVersion, lastSeenVersion]);
+
+  // Handle changelog close
+  const handleChangelogClose = () => {
+    setShowChangelog(false);
+    setLastSeenVersion(currentVersion);
+  };
 
   if (!mounted) {
     return null;
@@ -43,7 +67,9 @@ export default function Home() {
           <Calendar />
 
           <div className="pt-4 text-center text-xs text-gray-500">
-            <p className="text-xs text-gray-400 font-mono mb-2">v2.0.0</p>
+            <p className="text-xs text-gray-400 font-mono mb-2">
+              v{currentVersion}
+            </p>
             <p>Tap on days to mark office attendance</p>
             <p>Target: Minimum 40% office attendance rate</p>
             <p className="mt-1 text-gray-400">
@@ -56,6 +82,14 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Version Changelog Popup */}
+      {showChangelog && (
+        <VersionChangelog
+          currentVersion={currentVersion}
+          onClose={handleChangelogClose}
+        />
+      )}
     </main>
   );
 }

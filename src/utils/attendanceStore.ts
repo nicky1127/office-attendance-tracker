@@ -39,6 +39,8 @@ interface AttendanceState {
   currentDate: Date;
   // Period length (4 or 12 weeks)
   periodLength: PeriodLength;
+  // App version tracking
+  lastSeenVersion: string;
   // Days marked as attended
   attendedDays: Record<string, boolean>;
   // Days marked as annual leave
@@ -51,6 +53,7 @@ interface AttendanceState {
   // Actions
   setCurrentDate: (date: Date) => void;
   setPeriodLength: (weeks: PeriodLength) => void;
+  setLastSeenVersion: (version: string) => void;
   nextMonth: () => void;
   prevMonth: () => void;
   toggleDay: (dateStr: string) => void;
@@ -93,6 +96,7 @@ export const useAttendanceStore = create<AttendanceState>()(
     (set, get) => ({
       currentDate: new Date(),
       periodLength: 4, // Default to 4 weeks
+      lastSeenVersion: "", // Will be set on first load
       attendedDays: {},
       annualLeaveDays: {},
       sickLeaveDays: {},
@@ -101,6 +105,8 @@ export const useAttendanceStore = create<AttendanceState>()(
       setCurrentDate: (date) => set({ currentDate: date }),
 
       setPeriodLength: (weeks) => set({ periodLength: weeks }),
+
+      setLastSeenVersion: (version) => set({ lastSeenVersion: version }),
 
       nextMonth: () => {
         const { currentDate } = get();
