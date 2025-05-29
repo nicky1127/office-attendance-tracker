@@ -112,7 +112,7 @@ const Calendar = () => {
           className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "attend"
               ? "bg-gradient-to-r from-teal-600 to-emerald-400 text-white"
-              : "bg-white text-gray-700 hover:bg-emerald-50"
+              : "bg-white text-gray-700"
           }`}
         >
           <Briefcase
@@ -122,12 +122,16 @@ const Calendar = () => {
           <span className="hidden sm:inline">Mark Attendance</span>
           <span className="sm:hidden">Attend</span>
         </button>
+
+        {/* Separator */}
+        <div className="w-px bg-gray-200"></div>
+
         <button
           onClick={() => setMode("leave")}
           className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "leave"
               ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white"
-              : "bg-white text-gray-700 hover:bg-orange-50"
+              : "bg-white text-gray-700"
           }`}
         >
           <div className="relative">
@@ -145,12 +149,16 @@ const Calendar = () => {
           <span className="hidden sm:inline">Mark Holiday</span>
           <span className="sm:hidden">Holiday</span>
         </button>
+
+        {/* Separator */}
+        <div className="w-px bg-gray-200"></div>
+
         <button
           onClick={() => setMode("sick")}
           className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "sick"
               ? "bg-gradient-to-r from-red-400 to-pink-400 text-white"
-              : "bg-white text-gray-700 hover:bg-red-50"
+              : "bg-white text-gray-700"
           }`}
         >
           <div className="relative">
