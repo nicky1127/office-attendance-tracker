@@ -11,6 +11,7 @@ import {
   addDays,
   subDays,
   isFriday,
+  isMonday,
   startOfWeek,
   endOfWeek,
   subWeeks,
@@ -133,6 +134,22 @@ export const getPeriodStartDate = (
   return startDate;
 };
 
+// Get the display start date (first Monday of the period)
+export const getPeriodDisplayStartDate = (
+  weeks: PeriodLength,
+  endDate?: Date
+): Date => {
+  const actualStartDate = getPeriodStartDate(weeks, endDate);
+
+  // Find the first Monday on or after the actual start date
+  let mondayStart = new Date(actualStartDate);
+  while (!isMonday(mondayStart)) {
+    mondayStart = addDays(mondayStart, 1);
+  }
+
+  return mondayStart;
+};
+
 // Get the current period dates
 export const getCurrentPeriod = (weeks: PeriodLength) => {
   const endDate = getPeriodEndDate();
@@ -177,11 +194,12 @@ export const isDateInCurrentPeriod = (
   return date >= startDate && date <= endDate;
 };
 
-// Get formatted period string for display
+// Get formatted period string for display (showing Monday to Friday)
 export const getPeriodDisplayString = (weeks: PeriodLength): string => {
-  const { startDate, endDate } = getCurrentPeriod(weeks);
+  const endDate = getPeriodEndDate();
+  const displayStartDate = getPeriodDisplayStartDate(weeks, endDate);
 
-  const startStr = format(startDate, "MMM d");
+  const startStr = format(displayStartDate, "MMM d");
   const endStr = format(endDate, "MMM d, yyyy");
 
   return `${startStr} - ${endStr}`;

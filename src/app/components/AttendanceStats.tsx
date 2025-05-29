@@ -91,7 +91,7 @@ const AttendanceStats = () => {
       />
 
       <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex-1">
             <h2 className="text-lg font-medium text-gray-800">
               Office Attendance
@@ -101,32 +101,6 @@ const AttendanceStats = () => {
             </p>
           </div>
 
-          {/* Period Toggle */}
-          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden mr-2">
-            <button
-              onClick={() => setPeriodLength(4)}
-              className={`px-2 py-1 text-xs flex items-center space-x-1 ${
-                periodLength === 4
-                  ? "bg-blue-500 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              <Calendar size={12} />
-              <span className="hidden sm:inline">4w</span>
-            </button>
-            <button
-              onClick={() => setPeriodLength(12)}
-              className={`px-2 py-1 text-xs flex items-center space-x-1 ${
-                periodLength === 12
-                  ? "bg-blue-500 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              <CalendarDays size={12} />
-              <span className="hidden sm:inline">12w</span>
-            </button>
-          </div>
-
           {/* Reset button */}
           {!showResetConfirm ? (
             <button
@@ -134,8 +108,8 @@ const AttendanceStats = () => {
               className="flex items-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
               aria-label={`Reset ${periodLength}-week period`}
             >
-              <Trash2 size={14} className="flex-shrink-0" />
-              <span className="ml-1 hidden sm:inline">Reset</span>
+              <Trash2 size={16} className="flex-shrink-0" />
+              <span className="ml-1">Reset</span>
             </button>
           ) : (
             <div className="flex items-center space-x-2 text-xs">
@@ -153,6 +127,34 @@ const AttendanceStats = () => {
               </button>
             </div>
           )}
+        </div>
+
+        {/* Period Toggle - Full Width Row */}
+        <div className="mb-4">
+          <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setPeriodLength(4)}
+              className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center space-x-2 ${
+                periodLength === 4
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              <Calendar size={16} />
+              <span>4 Weeks</span>
+            </button>
+            <button
+              onClick={() => setPeriodLength(12)}
+              className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center space-x-2 ${
+                periodLength === 12
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              <CalendarDays size={16} />
+              <span>12 Weeks</span>
+            </button>
+          </div>
         </div>
 
         {/* Rate display */}
@@ -238,15 +240,6 @@ const AttendanceStats = () => {
               </p>
             </div>
           )}
-
-        {/* Period info */}
-        <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 text-center">
-          <p>
-            Total workdays in {periodLength}-week period:{" "}
-            {periodStats.totalWorkdays} | Window ends on{" "}
-            {format(periodStats.periodDates.endDate, "EEEE, MMM d")}
-          </p>
-        </div>
       </div>
     </>
   );
