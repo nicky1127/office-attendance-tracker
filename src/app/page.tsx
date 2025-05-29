@@ -8,7 +8,9 @@ import WeekdaySelector from "./components/WeekdaySelector";
 import LeaveSummary from "./components/LeaveSummary";
 import AppIcon from "./components/AppIcon";
 import VersionChangelog from "./components/VersionChangelog";
+import SplashScreen from "./components/SplashScreen";
 import { useAttendanceStore } from "@/utils/attendanceStore";
+import { useHydration } from "./hooks/useHydration";
 import {
   getCurrentVersion,
   isNewerVersion,
@@ -18,7 +20,8 @@ import {
 } from "@/utils/version";
 
 export default function Home() {
-  const [mounted, setMounted] = useState(false);
+  const isHydrated = useHydration();
+  const [showSplash, setShowSplash] = useState(true);
   const [showChangelog, setShowChangelog] = useState(false);
   const [changelogVersion, setChangelogVersion] = useState<string>("");
   const [versionCheckComplete, setVersionCheckComplete] = useState(false);
@@ -29,16 +32,24 @@ export default function Home() {
   // Get current version from package.json
   const currentVersion = getCurrentVersion();
 
-  // Wait for component to mount to avoid hydration issues with persisted store
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Handle splash screen completion
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
 
-  // Check for version updates after mounting
+  // Manually hydrate the store when component mounts
   useEffect(() => {
-    if (!mounted || versionCheckComplete) return;
+    if (isHydrated) {
+      // Force store hydration
+      useAttendanceStore.persist.rehydrate();
+    }
+  }, [isHydrated]);
 
-    // Add a small delay to ensure store is fully hydrated
+  // Check for version updates only after hydration
+  useEffect(() => {
+    if (!isHydrated || versionCheckComplete) return;
+
+    // Add a delay to ensure store is fully hydrated
     const checkVersionTimer = setTimeout(() => {
       console.log("Version check:", {
         currentVersion,
@@ -69,10 +80,10 @@ export default function Home() {
       }
 
       setVersionCheckComplete(true);
-    }, 100); // Small delay to ensure store hydration
+    }, 200); // Slightly longer delay for store hydration
 
     return () => clearTimeout(checkVersionTimer);
-  }, [mounted, currentVersion, lastSeenVersion, versionCheckComplete]);
+  }, [isHydrated, currentVersion, lastSeenVersion, versionCheckComplete]);
 
   // Handle changelog close
   const handleChangelogClose = () => {
@@ -89,24 +100,21 @@ export default function Home() {
     addToVersionHistory(changelogVersion, true);
   };
 
-  // Debug function for development (can be called from browser console)
+  // Debug function for development (only on client)
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (isHydrated && typeof window !== "undefined") {
       (window as any).getVersionDebugInfo = getVersionDebugInfo;
       (window as any).forceShowChangelog = () => {
         const { forceShowChangelog } = require("@/utils/version");
         forceShowChangelog();
       };
     }
-  }, []);
+  }, [isHydrated]);
 
-  if (!mounted) {
+  // Show splash screen during hydration and initial loading
+  if (!isHydrated || showSplash) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="animate-pulse">
-          <AppIcon size={64} className="mb-3 drop-shadow-md opacity-50" />
-        </div>
-      </main>
+      <SplashScreen onComplete={handleSplashComplete} minDisplayTime={1500} />
     );
   }
 
@@ -133,9 +141,10 @@ export default function Home() {
           <div className="pt-4 text-center text-xs text-gray-500">
             <p className="text-xs text-gray-400 font-mono mb-2">
               v{currentVersion}
-              {process.env.NODE_ENV === "development" && (
-                <span className="ml-2 text-orange-500">(dev)</span>
-              )}
+              {typeof window !== "undefined" &&
+                process.env.NODE_ENV === "development" && (
+                  <span className="ml-2 text-orange-500">(dev)</span>
+                )}
             </p>
             <p>Tap on days to mark office attendance</p>
             <p>Target: Minimum 40% office attendance rate</p>
@@ -150,7 +159,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Version Changelog Popup */}
+      {/* Version Changelog Popup - only show after hydration */}
       {showChangelog && changelogVersion && (
         <VersionChangelog
           currentVersion={changelogVersion}

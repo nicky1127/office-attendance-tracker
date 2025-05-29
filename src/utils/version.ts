@@ -86,29 +86,38 @@ export const addToVersionHistory = (
 ) => {
   if (typeof window === "undefined") return;
 
-  try {
-    const history = getVersionHistory();
-    const existingIndex = history.findIndex((h) => h.version === version);
+  // Use requestIdleCallback to avoid blocking during hydration
+  const addHistory = () => {
+    try {
+      const history = getVersionHistory();
+      const existingIndex = history.findIndex((h) => h.version === version);
 
-    const versionEntry: VersionHistory = {
-      version,
-      seenAt: new Date().toISOString(),
-      changelogShown,
-    };
+      const versionEntry: VersionHistory = {
+        version,
+        seenAt: new Date().toISOString(),
+        changelogShown,
+      };
 
-    if (existingIndex >= 0) {
-      // Update existing entry
-      history[existingIndex] = versionEntry;
-    } else {
-      // Add new entry
-      history.push(versionEntry);
+      if (existingIndex >= 0) {
+        // Update existing entry
+        history[existingIndex] = versionEntry;
+      } else {
+        // Add new entry
+        history.push(versionEntry);
+      }
+
+      // Keep only last 10 versions to prevent localStorage bloat
+      const trimmedHistory = history.slice(-10);
+      localStorage.setItem("version-history", JSON.stringify(trimmedHistory));
+    } catch (error) {
+      console.warn("Error saving version history:", error);
     }
+  };
 
-    // Keep only last 10 versions to prevent localStorage bloat
-    const trimmedHistory = history.slice(-10);
-    localStorage.setItem("version-history", JSON.stringify(trimmedHistory));
-  } catch (error) {
-    console.warn("Error saving version history:", error);
+  if ("requestIdleCallback" in window) {
+    requestIdleCallback(addHistory);
+  } else {
+    setTimeout(addHistory, 0);
   }
 };
 

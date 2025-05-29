@@ -72,3 +72,109 @@ body {
     overflow-y: auto;
   }
 }
+
+/* Add these animations to your existing src/app/globals.css file */
+
+/* Floating animations for particles */
+@keyframes float-1 {
+
+	0%,
+	100% {
+		transform: translateY(0px) translateX(0px);
+	}
+
+	33% {
+		transform: translateY(-20px) translateX(10px);
+	}
+
+	66% {
+		transform: translateY(10px) translateX(-5px);
+	}
+}
+
+@keyframes float-2 {
+
+	0%,
+	100% {
+		transform: translateY(0px) translateX(0px);
+	}
+
+	50% {
+		transform: translateY(-15px) translateX(-10px);
+	}
+}
+
+@keyframes float-3 {
+
+	0%,
+	100% {
+		transform: translateY(0px) translateX(0px);
+	}
+
+	25% {
+		transform: translateY(10px) translateX(15px);
+	}
+
+	75% {
+		transform: translateY(-25px) translateX(-8px);
+	}
+}
+
+/* Apply floating animations */
+.animate-float-1 {
+	animation: float-1 4s ease-in-out infinite;
+}
+
+.animate-float-2 {
+	animation: float-2 3s ease-in-out infinite;
+}
+
+.animate-float-3 {
+	animation: float-3 5s ease-in-out infinite;
+}
+
+/* Enhanced pulse animation for splash screen */
+@keyframes pulse-splash {
+	0% {
+		transform: scale(1);
+		opacity: 1;
+	}
+
+	50% {
+		transform: scale(1.05);
+		opacity: 0.8;
+	}
+
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+.animate-pulse-splash {
+	animation: pulse-splash 2s ease-in-out infinite;
+}
+
+/* Gradient text animation */
+@keyframes gradient-shift {
+	0% {
+		background-position: 0% 50%;
+	}
+
+	50% {
+		background-position: 100% 50%;
+	}
+
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+.animate-gradient {
+	background: linear-gradient(-45deg, #0d9488, #4f46e5, #7c3aed, #0891b2);
+	background-size: 400% 400%;
+	animation: gradient-shift 3s ease infinite;
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+}

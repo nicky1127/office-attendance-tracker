@@ -538,6 +538,10 @@ export const useAttendanceStore = create<AttendanceState>()(
     {
       name: "office-attendance-storage",
       storage: createJSONStorage(() => localStorage),
+
+      // Add skipHydration to prevent hydration mismatches
+      skipHydration: true,
+
       onRehydrateStorage: () => (state) => {
         console.log("Store: Starting rehydration...");
 
