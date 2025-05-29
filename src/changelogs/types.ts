@@ -11,3 +11,8 @@ export interface ChangelogContent {
   features: ChangelogFeature[];
   improvements: string[];
 }
+
+// Add the missing ChangelogData type
+export interface ChangelogData {
+  [version: string]: ChangelogContent;
+}

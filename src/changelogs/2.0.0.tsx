@@ -1,7 +1,7 @@
 import { Calendar, Heart, BarChart3, Smartphone } from "lucide-react";
 import { ChangelogContent } from "./types";
 
-const changelog: ChangelogContent = {
+const v2_0_0: ChangelogContent = {
   title: "Major Update: Period-Based Tracking",
 
   features: [
@@ -38,5 +38,6 @@ const changelog: ChangelogContent = {
   ],
 };
 
-// Export as default
-export default changelog;
+// Export both named and default
+export { v2_0_0 };
+export default v2_0_0;
