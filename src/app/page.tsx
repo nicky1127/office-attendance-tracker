@@ -43,11 +43,15 @@ export default function Home() {
           <Calendar />
 
           <div className="pt-4 text-center text-xs text-gray-500">
+            <p className="text-xs text-gray-400 font-mono mb-2">v2.0.0</p>
             <p>Tap on days to mark office attendance</p>
-            <p>Target: Minimum 40% office attendance rate </p>
+            <p>Target: Minimum 40% office attendance rate</p>
             <p className="mt-1 text-gray-400">
               Rate calculated over rolling {periodLength}-week periods ending on
               Fridays
+            </p>
+            <p className="mt-3 text-xs text-gray-400">
+              © 2025 Nicky Lai. All rights reserved.
             </p>
           </div>
         </div>
