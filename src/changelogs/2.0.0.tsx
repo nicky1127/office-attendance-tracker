@@ -38,4 +38,5 @@ const changelog: ChangelogContent = {
   ],
 };
 
+// Export as default
 export default changelog;

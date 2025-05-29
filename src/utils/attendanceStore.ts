@@ -34,6 +34,13 @@ type WeekdayOption =
   | "friday"
   | null;
 
+// Version history interface
+interface VersionHistoryEntry {
+  version: string;
+  seenAt: string;
+  changelogShown: boolean;
+}
+
 interface AttendanceState {
   // Current month and year (for calendar display)
   currentDate: Date;
@@ -41,6 +48,8 @@ interface AttendanceState {
   periodLength: PeriodLength;
   // App version tracking
   lastSeenVersion: string;
+  // Version history tracking
+  versionHistory: VersionHistoryEntry[];
   // Days marked as attended
   attendedDays: Record<string, boolean>;
   // Days marked as annual leave
@@ -54,6 +63,9 @@ interface AttendanceState {
   setCurrentDate: (date: Date) => void;
   setPeriodLength: (weeks: PeriodLength) => void;
   setLastSeenVersion: (version: string) => void;
+  addVersionToHistory: (version: string, changelogShown?: boolean) => void;
+  getVersionHistory: () => VersionHistoryEntry[];
+  clearVersionHistory: () => void;
   nextMonth: () => void;
   prevMonth: () => void;
   toggleDay: (dateStr: string) => void;
@@ -97,6 +109,7 @@ export const useAttendanceStore = create<AttendanceState>()(
       currentDate: new Date(),
       periodLength: 4, // Default to 4 weeks
       lastSeenVersion: "", // Will be set on first load
+      versionHistory: [], // Track version history
       attendedDays: {},
       annualLeaveDays: {},
       sickLeaveDays: {},
@@ -106,7 +119,51 @@ export const useAttendanceStore = create<AttendanceState>()(
 
       setPeriodLength: (weeks) => set({ periodLength: weeks }),
 
-      setLastSeenVersion: (version) => set({ lastSeenVersion: version }),
+      setLastSeenVersion: (version) => {
+        console.log("Store: Setting lastSeenVersion to:", version);
+        set({ lastSeenVersion: version });
+
+        // Also add to history
+        get().addVersionToHistory(version, true);
+      },
+
+      addVersionToHistory: (version, changelogShown = false) => {
+        const { versionHistory } = get();
+        const existingIndex = versionHistory.findIndex(
+          (h) => h.version === version
+        );
+
+        const versionEntry: VersionHistoryEntry = {
+          version,
+          seenAt: new Date().toISOString(),
+          changelogShown,
+        };
+
+        let newHistory;
+        if (existingIndex >= 0) {
+          // Update existing entry
+          newHistory = [...versionHistory];
+          newHistory[existingIndex] = versionEntry;
+        } else {
+          // Add new entry
+          newHistory = [...versionHistory, versionEntry];
+        }
+
+        // Keep only last 10 versions to prevent store bloat
+        const trimmedHistory = newHistory.slice(-10);
+
+        console.log("Store: Adding version to history:", versionEntry);
+        set({ versionHistory: trimmedHistory });
+      },
+
+      getVersionHistory: () => {
+        return get().versionHistory;
+      },
+
+      clearVersionHistory: () => {
+        console.log("Store: Clearing version history");
+        set({ versionHistory: [] });
+      },
 
       nextMonth: () => {
         const { currentDate } = get();
@@ -482,14 +539,42 @@ export const useAttendanceStore = create<AttendanceState>()(
       name: "office-attendance-storage",
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
+        console.log("Store: Starting rehydration...");
+
         // Convert currentDate back to a Date object when rehydrating from storage
         if (state && typeof state.currentDate === "string") {
           state.currentDate = new Date(state.currentDate);
+          console.log(
+            "Store: Converted currentDate from string to Date object"
+          );
         }
+
         // Ensure periodLength has a default value
         if (state && !state.periodLength) {
           state.periodLength = 4;
+          console.log("Store: Set default periodLength to 4");
         }
+
+        // Initialize version tracking if not present
+        if (state && !state.versionHistory) {
+          state.versionHistory = [];
+          console.log("Store: Initialized empty versionHistory");
+        }
+
+        // Ensure lastSeenVersion is initialized
+        if (state && state.lastSeenVersion === undefined) {
+          state.lastSeenVersion = "";
+          console.log("Store: Initialized empty lastSeenVersion");
+        }
+
+        console.log(
+          "Store: Rehydration complete. lastSeenVersion:",
+          state?.lastSeenVersion
+        );
+        console.log(
+          "Store: Version history length:",
+          state?.versionHistory?.length || 0
+        );
       },
     }
   )

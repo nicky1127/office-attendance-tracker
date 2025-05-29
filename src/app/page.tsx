@@ -9,11 +9,19 @@ import LeaveSummary from "./components/LeaveSummary";
 import AppIcon from "./components/AppIcon";
 import VersionChangelog from "./components/VersionChangelog";
 import { useAttendanceStore } from "@/utils/attendanceStore";
-import { getCurrentVersion, isNewerVersion } from "@/utils/version";
+import {
+  getCurrentVersion,
+  isNewerVersion,
+  addToVersionHistory,
+  getVersionDebugInfo,
+  isValidVersion,
+} from "@/utils/version";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
+  const [changelogVersion, setChangelogVersion] = useState<string>("");
+  const [versionCheckComplete, setVersionCheckComplete] = useState(false);
 
   const { periodLength, lastSeenVersion, setLastSeenVersion } =
     useAttendanceStore();
@@ -28,22 +36,78 @@ export default function Home() {
 
   // Check for version updates after mounting
   useEffect(() => {
-    if (mounted) {
-      // Check if this is a newer version
-      if (isNewerVersion(currentVersion, lastSeenVersion)) {
-        setShowChangelog(true);
+    if (!mounted || versionCheckComplete) return;
+
+    // Add a small delay to ensure store is fully hydrated
+    const checkVersionTimer = setTimeout(() => {
+      console.log("Version check:", {
+        currentVersion,
+        lastSeenVersion,
+        isNewer: isNewerVersion(currentVersion, lastSeenVersion),
+        isValidCurrent: isValidVersion(currentVersion),
+      });
+
+      // Validate current version format
+      if (!isValidVersion(currentVersion)) {
+        console.warn("Invalid current version format:", currentVersion);
+        setVersionCheckComplete(true);
+        return;
       }
-    }
-  }, [mounted, currentVersion, lastSeenVersion]);
+
+      // Check if this is a newer version or first time user
+      if (isNewerVersion(currentVersion, lastSeenVersion)) {
+        console.log("Showing changelog for version:", currentVersion);
+        setChangelogVersion(currentVersion);
+        setShowChangelog(true);
+
+        // Add to version history immediately when showing
+        addToVersionHistory(currentVersion, true);
+      } else {
+        console.log("No changelog needed, versions match");
+        // Still add to history for tracking purposes
+        addToVersionHistory(currentVersion, false);
+      }
+
+      setVersionCheckComplete(true);
+    }, 100); // Small delay to ensure store hydration
+
+    return () => clearTimeout(checkVersionTimer);
+  }, [mounted, currentVersion, lastSeenVersion, versionCheckComplete]);
 
   // Handle changelog close
   const handleChangelogClose = () => {
+    console.log(
+      "Closing changelog and updating lastSeenVersion to:",
+      changelogVersion
+    );
     setShowChangelog(false);
-    setLastSeenVersion(currentVersion);
+
+    // Update the stored version
+    setLastSeenVersion(changelogVersion);
+
+    // Update version history to mark changelog as shown
+    addToVersionHistory(changelogVersion, true);
   };
 
+  // Debug function for development (can be called from browser console)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any).getVersionDebugInfo = getVersionDebugInfo;
+      (window as any).forceShowChangelog = () => {
+        const { forceShowChangelog } = require("@/utils/version");
+        forceShowChangelog();
+      };
+    }
+  }, []);
+
   if (!mounted) {
-    return null;
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="animate-pulse">
+          <AppIcon size={64} className="mb-3 drop-shadow-md opacity-50" />
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -69,6 +133,9 @@ export default function Home() {
           <div className="pt-4 text-center text-xs text-gray-500">
             <p className="text-xs text-gray-400 font-mono mb-2">
               v{currentVersion}
+              {process.env.NODE_ENV === "development" && (
+                <span className="ml-2 text-orange-500">(dev)</span>
+              )}
             </p>
             <p>Tap on days to mark office attendance</p>
             <p>Target: Minimum 40% office attendance rate</p>
@@ -84,9 +151,9 @@ export default function Home() {
       </div>
 
       {/* Version Changelog Popup */}
-      {showChangelog && (
+      {showChangelog && changelogVersion && (
         <VersionChangelog
-          currentVersion={currentVersion}
+          currentVersion={changelogVersion}
           onClose={handleChangelogClose}
         />
       )}
