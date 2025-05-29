@@ -242,9 +242,12 @@ const Calendar = () => {
             }
           }
 
-          // Add outline for today
-          if (isTodayDate) {
-            dayClasses += " ring-2 ring-blue-500";
+          // Add styling for today - thick inset blue ring
+          if (isTodayDate && isCurrentMonth) {
+            dayClasses += " ring-inset ring-4 ring-blue-500";
+          } else if (isTodayDate) {
+            // Today in different month - subtle inset ring
+            dayClasses += " ring-inset ring-2 ring-blue-300";
           }
 
           return (
@@ -330,14 +333,8 @@ const Calendar = () => {
           <span>Weekend</span>
         </div>
         <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-white border-2 border-blue-500 mr-1"></div>
+          <div className="w-3 h-3 rounded-full bg-white border-4 border-blue-500 mr-1"></div>
           <span>Today</span>
-        </div>
-        <div className="flex items-center">
-          <div className="w-3 h-3 bg-gray-100 border border-gray-400 mr-1 text-gray-600 flex items-center justify-center text-xs">
-            1
-          </div>
-          <span>Month Start</span>
         </div>
       </div>
 
