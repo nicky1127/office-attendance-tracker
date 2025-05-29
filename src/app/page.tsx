@@ -114,7 +114,7 @@ export default function Home() {
   // Show splash screen during hydration and initial loading
   if (!isHydrated || showSplash) {
     return (
-      <SplashScreen onComplete={handleSplashComplete} minDisplayTime={1500} />
+      <SplashScreen onComplete={handleSplashComplete} minDisplayTime={0} />
     );
   }
 
