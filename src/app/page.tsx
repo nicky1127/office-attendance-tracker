@@ -44,7 +44,7 @@ export default function Home() {
 
           <div className="pt-4 text-center text-xs text-gray-500">
             <p>Tap on days to mark office attendance</p>
-            <p>Target: Minimum 40% office attendance rate</p>
+            <p>Target: Minimum 40% office attendance rate </p>
             <p className="mt-1 text-gray-400">
               Rate calculated over rolling {periodLength}-week periods ending on
               Fridays
