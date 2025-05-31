@@ -13,6 +13,7 @@ const PlannerAttendanceStats = () => {
     getPeriodStats,
     getDaysNeededForMinRate,
     resetCurrentPeriod,
+    getPlannerPeriodDisplayString,
   } = usePlannerStore();
 
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -48,8 +49,7 @@ const PlannerAttendanceStats = () => {
             Planner Attendance
           </h2>
           <p className="text-xs text-purple-500">
-            {periodLength}-week period from:{" "}
-            {format(plannerTodayObj, "MMM d, yyyy")}
+            {periodLength}-week period: {getPlannerPeriodDisplayString()}
           </p>
         </div>
 

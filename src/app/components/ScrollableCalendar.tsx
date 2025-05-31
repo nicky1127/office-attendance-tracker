@@ -58,8 +58,8 @@ const ScrollableCalendar = () => {
     startOfMonth(plannerTodayObj)
   );
 
-  // Generated months (5 months: -2, -1, center, +1, +2 for better scrolling)
-  const [monthsData, setMonthsData] = useState<any[]>([]);
+  // Generated months data
+  const [monthsData, setMonthsData] = useState<any>({});
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
@@ -83,52 +83,42 @@ const ScrollableCalendar = () => {
       addMonths(centerMonth, 2),
     ];
 
-    return months.map((month, index) => {
-      const monthStart = startOfMonth(month);
-      const monthEnd = endOfMonth(month);
+    // Find the start of the first week (Monday) that contains the first month's first day
+    const firstMonth = months[0];
+    const firstDay = startOfMonth(firstMonth);
 
-      // Get the day of the week for the first day of the month
-      const startDay = getDay(monthStart);
-      const mondayAdjustedStartDay = startDay === 0 ? 6 : startDay - 1;
+    // Find the Monday of the week containing the first day
+    let startDate = new Date(firstDay);
+    const firstDayOfWeek = getDay(firstDay);
+    const mondayOffset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // Convert Sunday=0 to Monday=0
+    startDate = subDays(firstDay, mondayOffset);
 
-      // Calculate previous month dates for empty slots
-      const prevMonthDates = [];
-      for (let i = mondayAdjustedStartDay - 1; i >= 0; i--) {
-        prevMonthDates.push(subDays(monthStart, i + 1));
-      }
+    // Find the end of the last week (Sunday) that contains the last month's last day
+    const lastMonth = months[months.length - 1];
+    const lastDay = endOfMonth(lastMonth);
 
-      // Get all days in current month
-      const currentMonthDates = eachDayOfInterval({
-        start: monthStart,
-        end: monthEnd,
-      });
+    // Find the Sunday of the week containing the last day
+    let endDate = new Date(lastDay);
+    const lastDayOfWeek = getDay(lastDay);
+    const sundayOffset = lastDayOfWeek === 0 ? 0 : 7 - lastDayOfWeek;
+    endDate = addDays(lastDay, sundayOffset);
 
-      // Calculate next month dates to fill the grid (if needed)
-      const totalSlotsUsed = prevMonthDates.length + currentMonthDates.length;
-      const remainingSlots = 42 - totalSlotsUsed; // 6 rows × 7 days = 42 slots
-      const nextMonthDates = [];
-      for (let i = 1; i <= remainingSlots && remainingSlots <= 14; i++) {
-        nextMonthDates.push(addDays(monthEnd, i));
-      }
-
-      const allDates = [
-        ...prevMonthDates,
-        ...currentMonthDates,
-        ...nextMonthDates,
-      ];
-
-      // Get bank holidays for this month
-      const bankHolidays = getBankHolidaysBetweenDates(monthStart, monthEnd);
-
-      return {
-        month,
-        monthStart,
-        monthEnd,
-        dates: allDates,
-        bankHolidays,
-        isCenter: index === 2, // Mark the center month (where planner today should be)
-      };
+    // Get all dates from start Monday to end Sunday
+    const allDates = eachDayOfInterval({
+      start: startDate,
+      end: endDate,
     });
+
+    // Get bank holidays for the date range
+    const bankHolidays = getBankHolidaysBetweenDates(
+      allDates[0],
+      allDates[allDates.length - 1]
+    );
+
+    return {
+      dates: allDates,
+      bankHolidays,
+    };
   }, []);
 
   // Initialize months data
@@ -141,7 +131,7 @@ const ScrollableCalendar = () => {
   // Auto-scroll to planner today on initial load
   useEffect(() => {
     if (
-      monthsData.length > 0 &&
+      monthsData.dates &&
       scrollContainerRef.current &&
       !hasInitiallyScrolled
     ) {
@@ -169,17 +159,6 @@ const ScrollableCalendar = () => {
             top: container.scrollTop + offset,
             behavior: "smooth",
           });
-        } else {
-          // Fallback: scroll to the center month
-          const centerMonthElement = container.querySelector(
-            '[data-month-center="true"]'
-          );
-          if (centerMonthElement) {
-            centerMonthElement.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            });
-          }
         }
 
         setHasInitiallyScrolled(true);
@@ -428,138 +407,130 @@ const ScrollableCalendar = () => {
         className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-purple-200 scrollbar-track-gray-100"
         onScroll={handleScroll}
       >
-        {monthsData.map((monthData, monthIndex) => (
-          <div
-            key={`month-${monthIndex}-${format(monthData.month, "yyyy-MM")}`}
-            className="mb-4"
-            data-month-center={monthData.isCenter ? "true" : undefined}
-          >
-            {/* Month header */}
-            <div className="text-center py-2 mb-2 bg-gray-50 rounded-lg sticky top-0 z-20">
-              <h3 className="text-sm font-medium text-gray-700">
-                {format(monthData.month, "MMMM yyyy")}
-                {monthData.isCenter && (
-                  <span className="ml-2 text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">
-                    Current
-                  </span>
-                )}
-              </h3>
-            </div>
+        {/* Single continuous grid for all dates */}
+        <div className="grid grid-cols-7 gap-1">
+          {monthsData.dates &&
+            monthsData.dates.map((day: Date, index: number) => {
+              const dateStr = format(day, "yyyy-MM-dd");
+              const isAttended = !!attendedDays[dateStr];
+              const isLeave = !!annualLeaveDays[dateStr];
+              const isSick = !!sickLeaveDays[dateStr];
+              const bankHolidayCheck = isBankHoliday(day);
+              const { isHoliday, holidayName } = bankHolidayCheck;
+              const isWeekendDay = isWeekend(day);
+              const isNonWorking = isWeekendDay || isHoliday;
+              const isPlannerTodayDate = isSameDay(day, plannerTodayObj);
+              const dayNumber = getDate(day);
 
-            {/* Calendar grid for this month */}
-            <div className="grid grid-cols-7 gap-1">
-              {monthData.dates.map((day: Date, index: number) => {
-                const dateStr = format(day, "yyyy-MM-dd");
-                const isAttended = !!attendedDays[dateStr];
-                const isLeave = !!annualLeaveDays[dateStr];
-                const isSick = !!sickLeaveDays[dateStr];
-                const isCurrentMonth = isSameMonth(day, monthData.month);
-                const bankHolidayCheck = isBankHoliday(day);
-                const { isHoliday, holidayName } = bankHolidayCheck;
-                const isWeekendDay = isWeekend(day);
-                const isNonWorking = isWeekendDay || isHoliday;
-                const isPlannerTodayDate = isSameDay(day, plannerTodayObj);
-                const dayNumber = getDate(day);
+              // Check if this date is within the current period
+              const isInPeriod = periodDateStrings.includes(dateStr);
 
-                // Check if this date is within the current period
-                const isInPeriod = periodDateStrings.includes(dateStr);
+              // Check if this is the first day of a month (for month indicator)
+              const isFirstOfMonth = dayNumber === 1;
 
-                // Check if this is the first day of a month (for month indicator)
-                const isFirstOfMonth = dayNumber === 1;
-
-                // Get dynamic status-based classes
-                const dayClasses = getDayStatusClasses(
-                  dateStr,
-                  isCurrentMonth,
-                  isWeekendDay,
-                  isHoliday,
-                  isPlannerTodayDate,
-                  isInPeriod
+              // Check if this date is from the current viewing months (not padding)
+              const isInViewingRange =
+                monthsData.dates &&
+                monthsData.dates.some(
+                  (d: Date) =>
+                    isSameMonth(d, day) &&
+                    (isSameMonth(day, viewingMonth) ||
+                      isSameMonth(day, subMonths(viewingMonth, 1)) ||
+                      isSameMonth(day, addMonths(viewingMonth, 1)) ||
+                      isSameMonth(day, subMonths(viewingMonth, 2)) ||
+                      isSameMonth(day, addMonths(viewingMonth, 2)))
                 );
 
-                // Determine cursor style - working days are always clickable in planner mode
-                const isClickable = !isNonWorking;
-                const cursorClass = isClickable
-                  ? "cursor-pointer"
-                  : "cursor-default";
+              // Get dynamic status-based classes
+              const dayClasses = getDayStatusClasses(
+                dateStr,
+                isInViewingRange, // Use viewing range instead of always true
+                isWeekendDay,
+                isHoliday,
+                isPlannerTodayDate,
+                isInPeriod
+              );
 
-                // Enhanced tooltip for better user understanding
-                const getTooltip = () => {
-                  if (isHoliday) return holidayName;
-                  if (isSick) return "Sick Leave";
-                  if (isLeave) return "Annual Leave";
-                  if (!isCurrentMonth) return format(day, "MMM d, yyyy");
-                  if (isPlannerTodayDate) return "Planner Today";
-                  if (isNonWorking) return "Weekend/Holiday";
-                  return "Click to mark attendance • Double-click to set as planner today";
-                };
+              // Determine cursor style - working days are always clickable in planner mode
+              const isClickable = !isNonWorking;
+              const cursorClass = isClickable
+                ? "cursor-pointer"
+                : "cursor-default";
 
-                return (
-                  <div
-                    key={dateStr}
-                    data-date={dateStr}
-                    className={`${dayClasses} ${cursorClass} min-h-[2.5rem]`}
-                    onClick={() => {
-                      if (!isNonWorking) {
-                        handleDayClick(dateStr, isNonWorking);
-                      }
-                    }}
-                    onDoubleClick={() => {
-                      if (!isNonWorking) {
-                        handleSetPlannerToday(dateStr, isNonWorking);
-                      }
-                    }}
-                    title={getTooltip()}
-                  >
-                    {/* Day number with optional month indicator */}
-                    <div className="flex flex-col items-center justify-center">
-                      {isFirstOfMonth && (
-                        <span
-                          className={`text-xs leading-none mb-0.5 ${
-                            !isInPeriod
-                              ? "text-gray-600 opacity-100"
-                              : "text-gray-500"
-                          }`}
-                        >
-                          {format(day, "MMM")}
-                        </span>
-                      )}
-                      <span className="leading-none">{dayNumber}</span>
-                    </div>
+              // Enhanced tooltip for better user understanding
+              const getTooltip = () => {
+                if (isHoliday) return holidayName;
+                if (isSick) return "Sick Leave";
+                if (isLeave) return "Annual Leave";
+                if (isPlannerTodayDate) return "Planner Today";
+                if (isNonWorking) return "Weekend/Holiday";
+                return "Click to mark attendance • Double-click to set as planner today";
+              };
 
-                    {/* Status indicators */}
-                    {isHoliday && (
+              return (
+                <div
+                  key={dateStr}
+                  data-date={dateStr}
+                  className={`${dayClasses} ${cursorClass} min-h-[2.5rem]`}
+                  onClick={() => {
+                    if (!isNonWorking) {
+                      handleDayClick(dateStr, isNonWorking);
+                    }
+                  }}
+                  onDoubleClick={() => {
+                    if (!isNonWorking) {
+                      handleSetPlannerToday(dateStr, isNonWorking);
+                    }
+                  }}
+                  title={getTooltip()}
+                >
+                  {/* Day number with optional month indicator */}
+                  <div className="flex flex-col items-center justify-center">
+                    {isFirstOfMonth && (
                       <span
-                        className={`absolute top-0 right-0 w-2 h-2 bg-purple-500 rounded-full ${
-                          !isInPeriod ? "opacity-50" : ""
+                        className={`text-xs leading-none mb-0.5 ${
+                          !isInPeriod
+                            ? "text-gray-600 opacity-100"
+                            : "text-gray-500"
                         }`}
-                      ></span>
+                      >
+                        {format(day, "MMM")}
+                      </span>
                     )}
-                    {isLeave && (
-                      <span
-                        className={`absolute top-0 right-0 w-2 h-2 bg-orange-400 rounded-full ${
-                          !isInPeriod ? "opacity-50" : ""
-                        }`}
-                      ></span>
-                    )}
-                    {isSick && (
-                      <span
-                        className={`absolute top-0 right-0 w-2 h-2 bg-red-400 rounded-full ${
-                          !isInPeriod ? "opacity-50" : ""
-                        }`}
-                      ></span>
-                    )}
-
-                    {/* Planner today indicator */}
-                    {isPlannerTodayDate && (
-                      <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
-                    )}
+                    <span className="leading-none">{dayNumber}</span>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+
+                  {/* Status indicators */}
+                  {isHoliday && (
+                    <span
+                      className={`absolute top-0 right-0 w-2 h-2 bg-purple-500 rounded-full ${
+                        !isInPeriod ? "opacity-50" : ""
+                      }`}
+                    ></span>
+                  )}
+                  {isLeave && (
+                    <span
+                      className={`absolute top-0 right-0 w-2 h-2 bg-orange-400 rounded-full ${
+                        !isInPeriod ? "opacity-50" : ""
+                      }`}
+                    ></span>
+                  )}
+                  {isSick && (
+                    <span
+                      className={`absolute top-0 right-0 w-2 h-2 bg-red-400 rounded-full ${
+                        !isInPeriod ? "opacity-50" : ""
+                      }`}
+                    ></span>
+                  )}
+
+                  {/* Planner today indicator */}
+                  {isPlannerTodayDate && (
+                    <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                  )}
+                </div>
+              );
+            })}
+        </div>
 
         {/* Loading indicator */}
         {isScrolling && (

@@ -15,6 +15,8 @@ import {
   isWeekend,
   parseISO,
   getDaysInMonth,
+  subDays,
+  addDays,
 } from "date-fns";
 import {
   isNonWorkingDay,
@@ -23,6 +25,10 @@ import {
   isDateInCurrentPeriod,
   getCurrentPeriod,
   PeriodLength,
+  getPeriodEndDate,
+  getPeriodStartDate,
+  getPeriodDisplayString,
+  getPeriodDisplayStartDate,
 } from "./dateUtils";
 import { isBankHoliday } from "./bankHolidays";
 
@@ -85,6 +91,7 @@ interface PlannerState {
     totalDays: number;
     weeks: PeriodLength;
   };
+  getPlannerPeriodDisplayString: () => string;
 }
 
 const isWeekdayFunc = (date: Date, weekday: WeekdayOption): boolean => {
@@ -94,6 +101,33 @@ const isWeekdayFunc = (date: Date, weekday: WeekdayOption): boolean => {
   if (weekday === "thursday") return isThursday(date);
   if (weekday === "friday") return isFriday(date);
   return false;
+};
+
+// Helper function to get the Friday end date for planner mode
+const getPlannerPeriodEndDate = (plannerToday: Date): Date => {
+  // If planner today is Friday, use it as the end date
+  if (isFriday(plannerToday)) {
+    return plannerToday;
+  }
+
+  // Otherwise, find the most recent Friday before planner today
+  let currentDate = new Date(plannerToday);
+  while (!isFriday(currentDate)) {
+    currentDate = subDays(currentDate, 1);
+  }
+
+  return currentDate;
+};
+
+// Helper function to get the start date for planner period
+const getPlannerPeriodStartDate = (
+  weeks: PeriodLength,
+  endDate: Date
+): Date => {
+  // Calculate days back: (weeks * 7) - 1 to get exactly N weeks
+  const daysBack = weeks * 7 - 1;
+  const startDate = subDays(endDate, daysBack);
+  return startDate;
 };
 
 export const usePlannerStore = create<PlannerState>()(
@@ -356,12 +390,17 @@ export const usePlannerStore = create<PlannerState>()(
         });
       },
 
-      // Planner-specific period calculations that use plannerToday instead of actual today
+      // Planner-specific period calculations that use plannerToday with Friday-ending logic
       getPlannerCurrentPeriod: () => {
         const { plannerToday, periodLength } = get();
-        const endDate = plannerToday;
-        const startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - (periodLength * 7 - 1));
+        const plannerTodayObj =
+          plannerToday instanceof Date ? plannerToday : new Date(plannerToday);
+
+        // Get the Friday end date based on planner today
+        const endDate = getPlannerPeriodEndDate(plannerTodayObj);
+
+        // Get the start date (N weeks before the end date)
+        const startDate = getPlannerPeriodStartDate(periodLength, endDate);
 
         return {
           startDate,
@@ -381,6 +420,25 @@ export const usePlannerStore = create<PlannerState>()(
           end: endDate,
         });
         return daysInPeriod.map((day) => format(day, "yyyy-MM-dd"));
+      },
+
+      getPlannerPeriodDisplayString: () => {
+        const { periodLength, plannerToday } = get();
+        const plannerTodayObj =
+          plannerToday instanceof Date ? plannerToday : new Date(plannerToday);
+
+        // Get the Friday end date based on planner today
+        const endDate = getPlannerPeriodEndDate(plannerTodayObj);
+
+        // Get the display start date (first Monday of the period)
+        const displayStartDate = getPeriodDisplayStartDate(
+          periodLength,
+          endDate
+        );
+
+        const startStr = format(displayStartDate, "MMM d");
+        const endStr = format(endDate, "MMM d, yyyy");
+        return `${startStr} - ${endStr}`;
       },
 
       getPeriodStats: () => {
