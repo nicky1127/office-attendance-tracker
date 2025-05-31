@@ -48,8 +48,10 @@ const ScrollableCalendar = () => {
     getPlannerPeriodDateStrings,
   } = usePlannerStore();
 
-  // Mode state: 'attend', 'leave', or 'sick'
-  const [mode, setMode] = useState<"attend" | "leave" | "sick">("attend");
+  // Mode state: 'attend', 'leave', 'sick', or 'setToday'
+  const [mode, setMode] = useState<"attend" | "leave" | "sick" | "setToday">(
+    "attend"
+  );
 
   // Current viewing month - initialize to planner today's month
   const plannerTodayObj =
@@ -71,7 +73,7 @@ const ScrollableCalendar = () => {
   // Get period date strings for checking if dates are in current period
   const periodDateStrings = useMemo(() => {
     return getPlannerPeriodDateStrings();
-  }, [getPlannerPeriodDateStrings]);
+  }, [getPlannerPeriodDateStrings, plannerToday, periodLength]);
 
   // Generate calendar data for 5 months
   const generateMonthsData = useCallback((centerMonth: Date) => {
@@ -180,6 +182,8 @@ const ScrollableCalendar = () => {
       toggleAnnualLeave(dateStr);
     } else if (mode === "sick") {
       toggleSickLeave(dateStr);
+    } else if (mode === "setToday") {
+      handleSetPlannerToday(dateStr, isNonWorking);
     }
   };
 
@@ -312,7 +316,8 @@ const ScrollableCalendar = () => {
           Current: {format(plannerTodayObj, "EEEE, MMMM d, yyyy")}
         </p>
         <p className="text-xs text-purple-500 mt-1">
-          Double-click any working day to set as new "today" for planning
+          Click any working day while in "Set Today" mode to set as new planner
+          today
         </p>
       </div>
 
@@ -320,7 +325,7 @@ const ScrollableCalendar = () => {
       <div className="flex mb-4 border border-gray-200 rounded-lg overflow-hidden">
         <button
           onClick={() => setMode("attend")}
-          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
+          className={`flex-1 py-2 px-1 flex items-center justify-center space-x-1 text-xs ${
             mode === "attend"
               ? "bg-gradient-to-r from-teal-600 to-emerald-400 text-white"
               : "bg-white text-gray-700"
@@ -330,15 +335,14 @@ const ScrollableCalendar = () => {
             size={14}
             className={mode === "attend" ? "text-white" : "text-emerald-700"}
           />
-          <span className="hidden sm:inline">Mark Attendance</span>
-          <span className="sm:hidden">Attend</span>
+          <span>Attend</span>
         </button>
 
         <div className="w-px bg-gray-200"></div>
 
         <button
           onClick={() => setMode("leave")}
-          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
+          className={`flex-1 py-2 px-1 flex items-center justify-center space-x-1 text-xs ${
             mode === "leave"
               ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white"
               : "bg-white text-gray-700"
@@ -356,15 +360,14 @@ const ScrollableCalendar = () => {
               }`}
             />
           </div>
-          <span className="hidden sm:inline">Mark Holiday</span>
-          <span className="sm:hidden">Holiday</span>
+          <span>Holiday</span>
         </button>
 
         <div className="w-px bg-gray-200"></div>
 
         <button
           onClick={() => setMode("sick")}
-          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
+          className={`flex-1 py-2 px-1 flex items-center justify-center space-x-1 text-xs ${
             mode === "sick"
               ? "bg-gradient-to-r from-red-400 to-pink-400 text-white"
               : "bg-white text-gray-700"
@@ -382,8 +385,24 @@ const ScrollableCalendar = () => {
               }`}
             />
           </div>
-          <span className="hidden sm:inline">Mark Sick</span>
-          <span className="sm:hidden">Sick</span>
+          <span>Sick</span>
+        </button>
+
+        <div className="w-px bg-gray-200"></div>
+
+        <button
+          onClick={() => setMode("setToday")}
+          className={`flex-1 py-2 px-1 flex items-center justify-center space-x-1 text-xs ${
+            mode === "setToday"
+              ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
+              : "bg-white text-gray-700"
+          }`}
+        >
+          <Target
+            size={14}
+            className={mode === "setToday" ? "text-white" : "text-purple-600"}
+          />
+          <span>Set Today</span>
         </button>
       </div>
 

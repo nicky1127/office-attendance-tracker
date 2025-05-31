@@ -62,9 +62,10 @@ const PlannerCalendar = () => {
   const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   // Get period date strings for checking if dates are in current period
+  // Make sure this is reactive to changes in plannerToday and periodLength
   const periodDateStrings = useMemo(() => {
     return getPlannerPeriodDateStrings();
-  }, [getPlannerPeriodDateStrings]);
+  }, [getPlannerPeriodDateStrings, plannerToday, periodLength]);
 
   // Get bank holidays for the current month
   const bankHolidays = useMemo(() => {
@@ -234,12 +235,21 @@ const PlannerCalendar = () => {
             Reset to Today
           </button>
         </div>
-        <p className="text-xs text-purple-600">
+        <p className="text-xs text-purple-600 mb-2">
           Current: {format(plannerTodayObj, "EEEE, MMMM d, yyyy")}
         </p>
-        <p className="text-xs text-purple-500 mt-1">
-          Double-click any working day to set as new "today" for planning
-        </p>
+        <div className="space-y-1">
+          <p className="text-xs text-purple-500">
+            Double-click any working day to set as new "planner today"
+          </p>
+          <p className="text-xs text-purple-500">
+            Periods end on the most recent Friday relative to this date
+          </p>
+          <p className="text-xs text-purple-500">
+            Dimmed dates are outside your current {periodLength}-week period
+            window
+          </p>
+        </div>
       </div>
 
       {/* Mode toggle buttons */}
@@ -352,6 +362,7 @@ const PlannerCalendar = () => {
             !isCurrentMonth && isBefore(day, startOfMonth(dateObj));
 
           // Check if this date is within the current period (4-week or 12-week)
+          // This is the key fix - ensuring this updates when plannerToday changes
           const isInPeriod = periodDateStrings.includes(dateStr);
 
           // In planner mode, any working day can be clicked
@@ -383,8 +394,11 @@ const PlannerCalendar = () => {
             if (isSick) return "Sick Leave";
             if (isLeave) return "Annual Leave";
             if (!isCurrentMonth) return format(day, "MMM d, yyyy");
-            if (isPlannerTodayDate) return "Planner Today";
-            if (isNonWorking) return "Weekend/Holiday";
+            if (isPlannerTodayDate)
+              return "Planner Today - Period reference point";
+            if (isNonWorking)
+              return "Weekend/Holiday (cannot set as planner today)";
+            if (!isInPeriod) return "Outside current period window (dimmed)";
             return "Click to mark attendance • Double-click to set as planner today";
           };
 
