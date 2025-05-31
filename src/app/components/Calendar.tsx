@@ -13,9 +13,15 @@ import {
   addDays,
   subDays,
   getDate,
+  isBefore,
+  startOfDay,
 } from "date-fns";
 import { useAttendanceStore } from "@/utils/attendanceStore";
-import { generateCalendarDays, isNonWorkingDay } from "@/utils/dateUtils";
+import {
+  generateCalendarDays,
+  isNonWorkingDay,
+  getPeriodDateStrings,
+} from "@/utils/dateUtils";
 import {
   isBankHoliday,
   getBankHolidaysBetweenDates,
@@ -26,6 +32,8 @@ import {
   SunMedium,
   Heart,
   Thermometer,
+  Lock,
+  Unlock,
 } from "lucide-react";
 
 const Calendar = () => {
@@ -37,10 +45,14 @@ const Calendar = () => {
     toggleDay,
     toggleAnnualLeave,
     toggleSickLeave,
+    periodLength,
   } = useAttendanceStore();
 
   // Mode state: 'attend', 'leave', or 'sick'
   const [mode, setMode] = useState<"attend" | "leave" | "sick">("attend");
+
+  // Amendment lock state - starts locked to prevent accidental changes
+  const [isAmendmentLocked, setIsAmendmentLocked] = useState(true);
 
   // Ensure currentDate is a Date object
   const dateObj =
@@ -50,6 +62,11 @@ const Calendar = () => {
 
   // Weekday headers starting with Monday
   const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  // Get period date strings for checking if dates are in current period
+  const periodDateStrings = useMemo(() => {
+    return getPeriodDateStrings(periodLength);
+  }, [periodLength]);
 
   // Get bank holidays for the current month
   const bankHolidays = useMemo(() => {
@@ -90,9 +107,21 @@ const Calendar = () => {
     return [...prevMonthDates, ...currentMonthDates, ...nextMonthDates];
   }, [dateObj]);
 
-  // Handle day click based on current mode
-  const handleDayClick = (dateStr: string, isNonWorking: boolean) => {
-    if (isNonWorking) return; // Don't allow clicking on non-working days
+  // Handle day click based on current mode - only for past dates and today (if it's a working day)
+  const handleDayClick = (
+    dateStr: string,
+    isNonWorking: boolean,
+    isPastOrTodayWorkingDay: boolean,
+    isCurrentMonth: boolean
+  ) => {
+    // Check if amendments are locked
+    if (isAmendmentLocked) {
+      return; // Don't allow any changes when locked
+    }
+
+    // Only allow clicking on past dates and today (if today is a working day)
+    // Future dates are not amendable
+    if (!isPastOrTodayWorkingDay || isNonWorking) return;
 
     if (mode === "attend") {
       toggleDay(dateStr);
@@ -103,12 +132,132 @@ const Calendar = () => {
     }
   };
 
+  // Helper function to determine if a date is from previous month
+  const isPreviousMonth = (day: Date) => {
+    const currentMonth = getDate(startOfMonth(dateObj));
+    const dayMonth = getDate(startOfMonth(day));
+    return (
+      dayMonth < currentMonth || (dayMonth > currentMonth && getDate(day) > 15)
+    ); // Handle year boundary
+  };
+
+  // Helper function to get status colors for any day (current month or not)
+  const getDayStatusClasses = (
+    dateStr: string,
+    isCurrentMonth: boolean,
+    isWeekendDay: boolean,
+    isHoliday: boolean,
+    isTodayDate: boolean,
+    isPastDate: boolean,
+    isPastOrTodayWorkingDay: boolean,
+    isPrevMonth: boolean,
+    isInPeriod: boolean
+  ) => {
+    const isAttended = !!attendedDays[dateStr];
+    const isLeave = !!annualLeaveDays[dateStr];
+    const isSick = !!sickLeaveDays[dateStr];
+    const isNonWorking = isWeekendDay || isHoliday;
+    const isFutureDate = !isPastDate && !isTodayDate;
+
+    let baseClasses =
+      "relative flex items-center justify-center aspect-square text-sm sm:text-base rounded-full transition-all";
+
+    // Apply dimming to ALL dates outside the tracking period (both past and future)
+    if (!isInPeriod) {
+      baseClasses += " opacity-50";
+    }
+
+    if (!isCurrentMonth) {
+      // For non-current month days
+      if (isWeekendDay) {
+        baseClasses += " text-red-500";
+      } else if (isHoliday) {
+        baseClasses += " text-purple-500 bg-purple-50";
+      } else if (isSick) {
+        baseClasses += " bg-red-100 text-red-800";
+      } else if (isLeave) {
+        baseClasses += " bg-amber-100 text-amber-800";
+      } else if (isAttended) {
+        baseClasses += " bg-emerald-500 text-white";
+      } else {
+        baseClasses += " text-gray-700";
+      }
+    } else {
+      // Current month styling
+      if (isWeekendDay) {
+        baseClasses += " text-red-500";
+      } else if (isHoliday) {
+        baseClasses += " text-purple-500 bg-purple-50 opacity-80";
+      } else if (isSick) {
+        baseClasses += " bg-red-100 text-red-800";
+      } else if (isLeave) {
+        baseClasses += " bg-amber-100 text-amber-800";
+      } else if (isAttended) {
+        baseClasses += " bg-emerald-500 text-white";
+      } else if (isFutureDate) {
+        // Future dates - muted and non-interactive
+        baseClasses += " bg-gray-50 text-gray-400";
+      } else if (isPastOrTodayWorkingDay) {
+        // Past dates and today (if working day) - normal styling with hover effects
+        baseClasses += " bg-white hover:bg-emerald-100 text-gray-700";
+      } else {
+        // Today if it's a non-working day - special styling
+        baseClasses += " bg-white text-gray-700";
+      }
+    }
+
+    // Add styling for today - thick inset blue ring (but don't override opacity from period logic)
+    if (isTodayDate && isCurrentMonth) {
+      baseClasses += " ring-inset ring-4 ring-blue-500";
+    } else if (isTodayDate) {
+      // Today in different month - subtle inset ring
+      baseClasses += " ring-inset ring-2 ring-blue-300";
+    }
+
+    // Override opacity for today - always keep it at full visibility
+    if (isTodayDate) {
+      // Remove any opacity class and ensure today is always visible
+      baseClasses = baseClasses.replace(" opacity-50", "");
+    }
+
+    return baseClasses;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-2 sm:p-4 w-full max-w-md mx-auto">
+      {/* Amendment Lock Toggle */}
+      <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg border">
+        <div className="flex items-center space-x-2">
+          {isAmendmentLocked ? (
+            <Lock size={16} className="text-red-600" />
+          ) : (
+            <Unlock size={16} className="text-green-600" />
+          )}
+          <span className="text-sm font-medium text-gray-700">
+            {isAmendmentLocked ? "Amendments Locked" : "Amendments Unlocked"}
+          </span>
+        </div>
+        <button
+          onClick={() => setIsAmendmentLocked(!isAmendmentLocked)}
+          className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+            isAmendmentLocked
+              ? "bg-red-100 text-red-700 hover:bg-red-200"
+              : "bg-green-100 text-green-700 hover:bg-green-200"
+          }`}
+        >
+          {isAmendmentLocked ? "Unlock" : "Lock"}
+        </button>
+      </div>
+
       {/* Mode toggle buttons */}
-      <div className="flex mb-4 border border-gray-200 rounded-lg overflow-hidden">
+      <div
+        className={`flex mb-4 border border-gray-200 rounded-lg overflow-hidden ${
+          isAmendmentLocked ? "opacity-50 pointer-events-none" : ""
+        }`}
+      >
         <button
           onClick={() => setMode("attend")}
+          disabled={isAmendmentLocked}
           className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "attend"
               ? "bg-gradient-to-r from-teal-600 to-emerald-400 text-white"
@@ -128,6 +277,7 @@ const Calendar = () => {
 
         <button
           onClick={() => setMode("leave")}
+          disabled={isAmendmentLocked}
           className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "leave"
               ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white"
@@ -155,6 +305,7 @@ const Calendar = () => {
 
         <button
           onClick={() => setMode("sick")}
+          disabled={isAmendmentLocked}
           className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "sick"
               ? "bg-gradient-to-r from-red-400 to-pink-400 text-white"
@@ -205,93 +356,116 @@ const Calendar = () => {
           const isTodayDate = isToday(day);
           const dayNumber = getDate(day);
 
+          // Check if this date is in the past (before today)
+          const today = startOfDay(new Date());
+          const dayDate = startOfDay(day);
+          const isPastDate = isBefore(dayDate, today);
+          const isFutureDate = !isPastDate && !isTodayDate;
+
+          // Check if this date is from previous month
+          const isPrevMonth =
+            !isCurrentMonth && isBefore(day, startOfMonth(dateObj));
+
+          // Check if this date is within the current period (4-week or 12-week)
+          const isInPeriod = periodDateStrings.includes(dateStr);
+
+          // Check if this date is amendable (past dates + today if it's a working day)
+          const isPastOrTodayWorkingDay =
+            isPastDate || (isTodayDate && !isNonWorking);
+
           // Check if this is the first day of a month (for month indicator)
           const isFirstOfMonth = dayNumber === 1;
 
-          // Determine classes based on various conditions
-          let dayClasses =
-            "relative flex items-center justify-center aspect-square text-sm sm:text-base rounded-full transition-all";
+          // Get dynamic status-based classes
+          const dayClasses = getDayStatusClasses(
+            dateStr,
+            isCurrentMonth,
+            isWeekendDay,
+            isHoliday,
+            isTodayDate,
+            isPastDate,
+            isPastOrTodayWorkingDay,
+            isPrevMonth,
+            isInPeriod
+          );
 
-          // Base styling for different day states
-          if (!isCurrentMonth) {
-            dayClasses += " opacity-40 text-gray-400";
-          }
+          // Determine cursor style - past dates and today (if working day) are clickable, but only if unlocked
+          const isClickable =
+            isPastOrTodayWorkingDay && !isNonWorking && !isAmendmentLocked;
+          const cursorClass = isClickable ? "cursor-pointer" : "cursor-default";
 
-          // Sunday and Saturday for weekend styling
-          const dayOfWeek = getDay(day);
-          const isSundayOrSaturday = dayOfWeek === 0 || dayOfWeek === 6;
-
-          if (isCurrentMonth) {
-            if (isSundayOrSaturday) {
-              dayClasses += " text-red-500";
-            } else if (isHoliday) {
-              dayClasses += " text-purple-500 bg-purple-50 opacity-80";
-            } else if (isSick) {
-              dayClasses += " bg-red-100 text-red-800";
-            } else if (isLeave) {
-              dayClasses += " bg-amber-100 text-amber-800";
-            } else if (isAttended) {
-              dayClasses += " bg-emerald-500 text-white";
-            } else {
-              dayClasses += " bg-white hover:bg-emerald-100 text-gray-700";
+          // Enhanced tooltip for better user understanding
+          const getTooltip = () => {
+            if (isAmendmentLocked && isPastOrTodayWorkingDay && !isNonWorking) {
+              return "Amendments are locked - unlock to make changes";
             }
-          } else {
-            // For non-current month dates, just show as muted
-            if (isSundayOrSaturday) {
-              dayClasses += " text-red-300";
-            }
-          }
-
-          // Add styling for today - thick inset blue ring
-          if (isTodayDate && isCurrentMonth) {
-            dayClasses += " ring-inset ring-4 ring-blue-500";
-          } else if (isTodayDate) {
-            // Today in different month - subtle inset ring
-            dayClasses += " ring-inset ring-2 ring-blue-300";
-          }
+            if (isHoliday) return holidayName;
+            if (isSick) return "Sick Leave";
+            if (isLeave) return "Annual Leave";
+            if (!isCurrentMonth) return format(day, "MMM d, yyyy");
+            if (isTodayDate && isNonWorking)
+              return "Today (weekend/holiday - not amendable)";
+            if (isTodayDate) return "Today (amendable)";
+            if (isFutureDate) return "Future date (not amendable)";
+            return undefined;
+          };
 
           return (
             <div
               key={dateStr}
-              className={`${dayClasses} ${
-                isNonWorking || !isCurrentMonth
-                  ? "cursor-default"
-                  : "cursor-pointer"
-              }`}
+              className={`${dayClasses} ${cursorClass}`}
               onClick={() =>
-                isCurrentMonth && handleDayClick(dateStr, isNonWorking)
+                handleDayClick(
+                  dateStr,
+                  isNonWorking,
+                  isPastOrTodayWorkingDay,
+                  isCurrentMonth
+                )
               }
-              title={
-                isHoliday
-                  ? holidayName
-                  : isSick
-                  ? "Sick Leave"
-                  : isLeave
-                  ? "Annual Leave"
-                  : !isCurrentMonth
-                  ? format(day, "MMM d, yyyy")
-                  : undefined
-              }
+              title={getTooltip()}
             >
               {/* Day number with optional month indicator */}
               <div className="flex flex-col items-center justify-center">
                 {isFirstOfMonth && (
-                  <span className="text-xs text-gray-500 leading-none mb-0.5">
+                  <span
+                    className={`text-xs leading-none mb-0.5 ${
+                      !isInPeriod
+                        ? "text-gray-600 opacity-100"
+                        : "text-gray-500"
+                    }`}
+                  >
                     {format(day, "MMM")}
                   </span>
                 )}
                 <span className="leading-none">{dayNumber}</span>
               </div>
 
-              {/* Status indicators */}
-              {isCurrentMonth && isHoliday && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-purple-500 rounded-full"></span>
+              {/* Status indicators - show for both current and other months */}
+              {isHoliday && (
+                <span
+                  className={`absolute top-0 right-0 w-2 h-2 bg-purple-500 rounded-full ${
+                    !isInPeriod ? "opacity-50" : ""
+                  }`}
+                ></span>
               )}
-              {isCurrentMonth && isLeave && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-orange-400 rounded-full"></span>
+              {isLeave && (
+                <span
+                  className={`absolute top-0 right-0 w-2 h-2 bg-orange-400 rounded-full ${
+                    !isInPeriod ? "opacity-50" : ""
+                  }`}
+                ></span>
               )}
-              {isCurrentMonth && isSick && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-400 rounded-full"></span>
+              {isSick && (
+                <span
+                  className={`absolute top-0 right-0 w-2 h-2 bg-red-400 rounded-full ${
+                    !isInPeriod ? "opacity-50" : ""
+                  }`}
+                ></span>
+              )}
+
+              {/* Future date indicator */}
+              {isFutureDate && isCurrentMonth && !isNonWorking && (
+                <span className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-gray-400 rounded-full opacity-60"></span>
               )}
             </div>
           );
