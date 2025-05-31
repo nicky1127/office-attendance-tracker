@@ -1,12 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { Trash2, Calendar as CalendarIcon, CalendarDays } from "lucide-react";
 import MonthYearPicker from "./components/MonthYearPicker";
 import Calendar from "./components/Calendar";
-import PlannerCalendar from "./components/PlannerCalendar";
+import ScrollableCalendar from "./components/ScrollableCalendar";
 import AttendanceStats from "./components/AttendanceStats";
 import WeekdaySelector from "./components/WeekdaySelector";
 import LeaveSummary from "./components/LeaveSummary";
+import PlannerAttendanceStats from "./components/PlannerAttendanceStats";
+import PlannerLeaveSummary from "./components/PlannerLeaveSummary";
+import PlannerWeekdaySelector from "./components/PlannerWeekdaySelector";
 import AppIcon from "./components/AppIcon";
 import AppBar from "./components/AppBar";
 import VersionChangelog from "./components/VersionChangelog";
@@ -169,11 +174,10 @@ export default function Home() {
               </div>
             </>
           ) : (
-            // Planner Page
+            // Planner Page - Uses planner-specific components and scrollable calendar
             <>
               <div className="space-y-4">
-                <MonthYearPicker />
-                {/* Use Planner-specific components here */}
+                {/* Planner Introduction */}
                 <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
                   <h2 className="text-lg font-medium text-purple-800 mb-2">
                     Attendance Planner
@@ -187,6 +191,7 @@ export default function Home() {
                       How to use:
                     </h3>
                     <ul className="text-xs text-purple-700 space-y-1">
+                      <li>• Scroll through months to see all dates</li>
                       <li>
                         • Double-click any working day to set as "planner today"
                       </li>
@@ -202,10 +207,12 @@ export default function Home() {
                     </ul>
                   </div>
                 </div>
-                <AttendanceStats />
-                <LeaveSummary />
-                <WeekdaySelector />
-                <PlannerCalendar />
+
+                {/* Use Planner-specific components */}
+                <PlannerAttendanceStats />
+                <PlannerLeaveSummary />
+                <PlannerWeekdaySelector />
+                <ScrollableCalendar />
 
                 <div className="pt-4 text-center text-xs text-gray-500">
                   <p className="text-xs text-gray-400 font-mono mb-2">
@@ -218,8 +225,7 @@ export default function Home() {
                   <p>Plan future attendance scenarios</p>
                   <p>Target: Minimum 40% office attendance rate</p>
                   <p className="mt-1 text-gray-400">
-                    Planner mode allows setting any date as "today" for scenario
-                    planning
+                    Scroll through months to plan your attendance
                   </p>
                   <p className="mt-3 text-xs text-gray-400">
                     © 2025 Nicky Lai. All rights reserved.
