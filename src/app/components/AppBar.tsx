@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X, Calendar, PlannerIcon } from "lucide-react";
+import { Menu, X, Calendar } from "lucide-react";
 import AppIcon from "./AppIcon";
 
 interface AppBarProps {
