@@ -134,21 +134,23 @@ const ImportTrackerData = () => {
             <button
               onClick={handleButtonClick}
               disabled={isImporting}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center justify-center px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
                 isImporting
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-blue-500 text-white hover:bg-blue-600 hover:scale-105"
               }`}
             >
               {isImporting ? (
-                <>
+                <div className="flex items-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-transparent"></div>
-                  <span>Importing...</span>
-                </>
+                  <span className="hidden sm:inline">Importing...</span>
+                  <span className="sm:hidden">...</span>
+                </div>
               ) : (
-                <>
-                  <span>Import</span>
-                </>
+                <div className="flex items-center justify-center">
+                  <span className="hidden sm:inline">Import</span>
+                  <span className="sm:hidden">Import</span>
+                </div>
               )}
             </button>
           )}
@@ -183,15 +185,16 @@ const ImportTrackerData = () => {
           <div className="flex space-x-3">
             <button
               onClick={() => setShowConfirm(false)}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
             >
               Cancel
             </button>
             <button
               onClick={handleImport}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
+              className="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors flex items-center justify-center"
             >
-              Replace Data
+              <span className="hidden sm:inline">Replace Data</span>
+              <span className="sm:hidden">Replace</span>
             </button>
           </div>
         </div>
