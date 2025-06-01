@@ -45,10 +45,10 @@ const PlannerAttendanceStats = () => {
     <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
       <div className="flex items-center justify-between mb-4">
         <div className="flex-1">
-          <h2 className="text-lg font-medium text-purple-800">
+          <h2 className="text-lg font-medium text-blue-800">
             Planner Attendance
           </h2>
-          <p className="text-xs text-purple-500">
+          <p className="text-xs text-blue-500">
             {periodLength}-week period: {getPlannerPeriodDisplayString()}
           </p>
         </div>
@@ -57,7 +57,7 @@ const PlannerAttendanceStats = () => {
         {!showResetConfirm ? (
           <button
             onClick={handleReset}
-            className="flex items-center text-xs text-purple-400 hover:text-purple-600 transition-colors"
+            className="flex items-center text-xs text-blue-400 hover:text-blue-600 transition-colors"
             aria-label={`Reset ${periodLength}-week period`}
           >
             <Trash2 size={16} className="flex-shrink-0" />
@@ -83,13 +83,13 @@ const PlannerAttendanceStats = () => {
 
       {/* Period Toggle - Full Width Row */}
       <div className="mb-4">
-        <div className="flex border border-purple-200 rounded-lg overflow-hidden">
+        <div className="flex border border-blue-200 rounded-lg overflow-hidden">
           <button
             onClick={() => setPeriodLength(4)}
             className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center space-x-2 ${
               periodLength === 4
-                ? "bg-purple-500 text-white"
-                : "bg-white text-purple-600 hover:bg-purple-50"
+                ? "bg-blue-500 text-white"
+                : "bg-white text-blue-600 hover:bg-blue-50"
             }`}
           >
             <CalendarIcon size={16} />
@@ -99,8 +99,8 @@ const PlannerAttendanceStats = () => {
             onClick={() => setPeriodLength(12)}
             className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center space-x-2 ${
               periodLength === 12
-                ? "bg-purple-500 text-white"
-                : "bg-white text-purple-600 hover:bg-purple-50"
+                ? "bg-blue-500 text-white"
+                : "bg-white text-blue-600 hover:bg-blue-50"
             }`}
           >
             <CalendarDays size={16} />
@@ -119,7 +119,7 @@ const PlannerAttendanceStats = () => {
           <div
             className={`${
               attendanceRate >= 0.4
-                ? "bg-purple-500"
+                ? "bg-blue-500"
                 : attendanceRate >= 0.3
                 ? "bg-yellow-500"
                 : "bg-red-500"
@@ -131,9 +131,9 @@ const PlannerAttendanceStats = () => {
 
       {/* Days count */}
       <div className="grid grid-cols-4 gap-2 text-center mb-3">
-        <div className="bg-purple-50 rounded-lg p-2">
+        <div className="bg-blue-50 rounded-lg p-2">
           <p className="text-xs text-gray-600">Attended</p>
-          <p className="text-lg font-semibold text-purple-700">
+          <p className="text-lg font-semibold text-blue-700">
             {periodStats.attendedDays}
           </p>
         </div>
@@ -149,9 +149,9 @@ const PlannerAttendanceStats = () => {
             {periodStats.sickLeaveDays}
           </p>
         </div>
-        <div className="bg-purple-50 rounded-lg p-2 relative group">
+        <div className="bg-blue-50 rounded-lg p-2 relative group">
           <p className="text-xs text-gray-600">Available</p>
-          <p className="text-lg font-semibold text-purple-700">
+          <p className="text-lg font-semibold text-blue-700">
             {periodStats.availableWorkdays}
           </p>
           <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 w-48 -top-16 left-1/2 transform -translate-x-1/2 z-10">
@@ -176,8 +176,8 @@ const PlannerAttendanceStats = () => {
 
       {/* Target achieved */}
       {attendanceRate >= 0.4 && (
-        <div className="bg-purple-50 rounded-lg p-3 text-center">
-          <p className="text-sm text-purple-800 font-medium">
+        <div className="bg-blue-50 rounded-lg p-3 text-center">
+          <p className="text-sm text-blue-800 font-medium">
             ✓ Target attendance rate achieved
           </p>
         </div>

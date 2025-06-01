@@ -76,7 +76,7 @@ const PlannerLeaveSummary = () => {
         className="flex items-center justify-between cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <h2 className="text-lg font-medium text-purple-800">
+        <h2 className="text-lg font-medium text-blue-800">
           Planner Leave Summary
         </h2>
         <div className="flex items-center space-x-2">
@@ -92,7 +92,7 @@ const PlannerLeaveSummary = () => {
               </span>
             )}
           </div>
-          <button className="text-purple-500">
+          <button className="text-blue-500">
             {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </button>
         </div>

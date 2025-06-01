@@ -48,10 +48,8 @@ const ScrollableCalendar = () => {
     getPlannerPeriodDateStrings,
   } = usePlannerStore();
 
-  // Mode state: 'attend', 'leave', 'sick', or 'setToday'
-  const [mode, setMode] = useState<"attend" | "leave" | "sick" | "setToday">(
-    "attend"
-  );
+  // Mode state: 'attend', 'leave', or 'sick'
+  const [mode, setMode] = useState<"attend" | "leave" | "sick">("attend");
 
   // Current viewing month - initialize to planner today's month
   const plannerTodayObj =
@@ -71,6 +69,7 @@ const ScrollableCalendar = () => {
   const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   // Get period date strings for checking if dates are in current period
+  // FIXED: Make sure this is reactive to changes in plannerToday and periodLength
   const periodDateStrings = useMemo(() => {
     return getPlannerPeriodDateStrings();
   }, [getPlannerPeriodDateStrings, plannerToday, periodLength]);
@@ -182,8 +181,6 @@ const ScrollableCalendar = () => {
       toggleAnnualLeave(dateStr);
     } else if (mode === "sick") {
       toggleSickLeave(dateStr);
-    } else if (mode === "setToday") {
-      handleSetPlannerToday(dateStr, isNonWorking);
     }
   };
 
@@ -253,12 +250,12 @@ const ScrollableCalendar = () => {
       }
     }
 
-    // Add styling for planner today - thick inset purple ring
+    // Add styling for planner today - thick inset blue ring (changed from purple)
     if (isPlannerTodayDate && isCurrentMonth) {
-      baseClasses += " ring-inset ring-4 ring-purple-500";
+      baseClasses += " ring-inset ring-4 ring-blue-500";
     } else if (isPlannerTodayDate) {
       // Planner today in different month - subtle inset ring
-      baseClasses += " ring-inset ring-2 ring-purple-300";
+      baseClasses += " ring-inset ring-2 ring-blue-300";
     }
 
     // Override opacity for planner today - always keep it at full visibility
@@ -296,36 +293,44 @@ const ScrollableCalendar = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 w-full max-w-md mx-auto">
-      {/* Planner Today Selector */}
-      <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+      {/* Planner Today Selector - Changed to blue theme */}
+      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
-            <Target size={16} className="text-purple-600" />
-            <span className="text-sm font-medium text-purple-800">
+            <Target size={16} className="text-blue-600" />
+            <span className="text-sm font-medium text-blue-800">
               Planner "Today"
             </span>
           </div>
           <button
             onClick={() => setPlannerToday(new Date())}
-            className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+            className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
           >
             Reset to Today
           </button>
         </div>
-        <p className="text-xs text-purple-600">
+        <p className="text-xs text-blue-600 mb-2">
           Current: {format(plannerTodayObj, "EEEE, MMMM d, yyyy")}
         </p>
-        <p className="text-xs text-purple-500 mt-1">
-          Click any working day while in "Set Today" mode to set as new planner
-          today
-        </p>
+        <div className="space-y-1">
+          <p className="text-xs text-blue-500">
+            Double-click any working day to set as new "planner today"
+          </p>
+          <p className="text-xs text-blue-500">
+            Scroll through months • Periods end on most recent Friday
+          </p>
+          <p className="text-xs text-blue-500">
+            Dimmed dates are outside your current {periodLength}-week period
+            window
+          </p>
+        </div>
       </div>
 
       {/* Mode toggle buttons */}
       <div className="flex mb-4 border border-gray-200 rounded-lg overflow-hidden">
         <button
           onClick={() => setMode("attend")}
-          className={`flex-1 py-2 px-1 flex items-center justify-center space-x-1 text-xs ${
+          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "attend"
               ? "bg-gradient-to-r from-teal-600 to-emerald-400 text-white"
               : "bg-white text-gray-700"
@@ -335,14 +340,15 @@ const ScrollableCalendar = () => {
             size={14}
             className={mode === "attend" ? "text-white" : "text-emerald-700"}
           />
-          <span>Attend</span>
+          <span className="hidden sm:inline">Mark Attendance</span>
+          <span className="sm:hidden">Attend</span>
         </button>
 
         <div className="w-px bg-gray-200"></div>
 
         <button
           onClick={() => setMode("leave")}
-          className={`flex-1 py-2 px-1 flex items-center justify-center space-x-1 text-xs ${
+          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "leave"
               ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white"
               : "bg-white text-gray-700"
@@ -360,14 +366,15 @@ const ScrollableCalendar = () => {
               }`}
             />
           </div>
-          <span>Holiday</span>
+          <span className="hidden sm:inline">Mark Holiday</span>
+          <span className="sm:hidden">Holiday</span>
         </button>
 
         <div className="w-px bg-gray-200"></div>
 
         <button
           onClick={() => setMode("sick")}
-          className={`flex-1 py-2 px-1 flex items-center justify-center space-x-1 text-xs ${
+          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "sick"
               ? "bg-gradient-to-r from-red-400 to-pink-400 text-white"
               : "bg-white text-gray-700"
@@ -385,24 +392,8 @@ const ScrollableCalendar = () => {
               }`}
             />
           </div>
-          <span>Sick</span>
-        </button>
-
-        <div className="w-px bg-gray-200"></div>
-
-        <button
-          onClick={() => setMode("setToday")}
-          className={`flex-1 py-2 px-1 flex items-center justify-center space-x-1 text-xs ${
-            mode === "setToday"
-              ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
-              : "bg-white text-gray-700"
-          }`}
-        >
-          <Target
-            size={14}
-            className={mode === "setToday" ? "text-white" : "text-purple-600"}
-          />
-          <span>Set Today</span>
+          <span className="hidden sm:inline">Mark Sick</span>
+          <span className="sm:hidden">Sick</span>
         </button>
       </div>
 
@@ -423,7 +414,7 @@ const ScrollableCalendar = () => {
       {/* Scrollable calendar dates */}
       <div
         ref={scrollContainerRef}
-        className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-purple-200 scrollbar-track-gray-100"
+        className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-gray-100"
         onScroll={handleScroll}
       >
         {/* Single continuous grid for all dates */}
@@ -481,8 +472,12 @@ const ScrollableCalendar = () => {
                 if (isHoliday) return holidayName;
                 if (isSick) return "Sick Leave";
                 if (isLeave) return "Annual Leave";
-                if (isPlannerTodayDate) return "Planner Today";
-                if (isNonWorking) return "Weekend/Holiday";
+                if (isPlannerTodayDate)
+                  return "Planner Today - Period reference point";
+                if (isNonWorking)
+                  return "Weekend/Holiday (cannot set as planner today)";
+                if (!isInPeriod)
+                  return "Outside current period window (dimmed)";
                 return "Click to mark attendance • Double-click to set as planner today";
               };
 
@@ -542,20 +537,20 @@ const ScrollableCalendar = () => {
                     ></span>
                   )}
 
-                  {/* Planner today indicator */}
+                  {/* Planner today indicator - Changed to blue */}
                   {isPlannerTodayDate && (
-                    <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                    <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
                   )}
                 </div>
               );
             })}
         </div>
 
-        {/* Loading indicator */}
+        {/* Loading indicator - Changed to blue */}
         {isScrolling && (
           <div className="text-center py-4">
-            <div className="inline-flex items-center space-x-2 text-purple-600">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+            <div className="inline-flex items-center space-x-2 text-blue-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
               <span className="text-sm">Loading...</span>
             </div>
           </div>
@@ -597,7 +592,7 @@ const ScrollableCalendar = () => {
           <span>Weekend</span>
         </div>
         <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-white border-4 border-purple-500 mr-1"></div>
+          <div className="w-3 h-3 rounded-full bg-white border-4 border-blue-500 mr-1"></div>
           <span>Planner Today</span>
         </div>
       </div>

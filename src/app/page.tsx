@@ -177,20 +177,20 @@ export default function Home() {
             // Planner Page - Uses planner-specific components and scrollable calendar
             <>
               <div className="space-y-4">
-                {/* Planner Introduction */}
+                {/* Planner Introduction - Updated to blue theme */}
                 <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-                  <h2 className="text-lg font-medium text-purple-800 mb-2">
+                  <h2 className="text-lg font-medium text-blue-800 mb-2">
                     Attendance Planner
                   </h2>
-                  <p className="text-sm text-purple-600 mb-3">
+                  <p className="text-sm text-blue-600 mb-3">
                     Plan and explore different attendance scenarios by setting
                     any working day as your "planner today"
                   </p>
-                  <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
-                    <h3 className="text-sm font-medium text-purple-800 mb-2">
+                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                    <h3 className="text-sm font-medium text-blue-800 mb-2">
                       How to use the Planner:
                     </h3>
-                    <ul className="text-xs text-purple-700 space-y-1.5">
+                    <ul className="text-xs text-blue-700 space-y-1.5">
                       <li>
                         • <strong>Set Planner Today:</strong> Double-click any
                         working day to set as your reference "today"
@@ -216,9 +216,9 @@ export default function Home() {
                         to the actual current date
                       </li>
                     </ul>
-                    <div className="mt-3 pt-2 border-t border-purple-200">
-                      <p className="text-xs text-purple-600">
-                        <strong>Tip:</strong> The purple ring shows your current
+                    <div className="mt-3 pt-2 border-t border-blue-200">
+                      <p className="text-xs text-blue-600">
+                        <strong>Tip:</strong> The blue ring shows your current
                         "planner today" date. All calculations are based on
                         periods ending on the most recent Friday relative to
                         this date.

@@ -26,11 +26,11 @@ const PlannerWeekdaySelector = () => {
     <div className="relative mb-4">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between bg-white rounded-lg shadow-sm p-3 text-purple-800 hover:bg-purple-50 transition-colors border border-purple-200"
+        className="w-full flex items-center justify-between bg-white rounded-lg shadow-sm p-3 text-blue-800 hover:bg-blue-50 transition-colors border border-blue-200"
       >
         <span className="flex-1 text-left">{dropdownLabel}</span>
         <svg
-          className={`min-w-5 min-h-5 w-5 h-5 transition-transform duration-200 text-purple-600 ${
+          className={`min-w-5 min-h-5 w-5 h-5 transition-transform duration-200 text-blue-600 ${
             isOpen ? "transform rotate-180" : ""
           }`}
           width="20"
@@ -50,16 +50,16 @@ const PlannerWeekdaySelector = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg border border-purple-200">
+        <div className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg border border-blue-200">
           <ul>
             {weekdays.map((weekday) => (
               <li key={weekday.id}>
                 <button
                   onClick={() => handleWeekdaySelect(weekday.id)}
-                  className={`w-full text-left p-3 hover:bg-purple-100 ${
+                  className={`w-full text-left p-3 hover:bg-blue-100 ${
                     selectedWeekday === weekday.id
-                      ? "bg-purple-50 text-purple-600"
-                      : "text-purple-800"
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-blue-800"
                   }`}
                 >
                   Mark all {weekday.label}

@@ -200,12 +200,12 @@ const PlannerCalendar = () => {
       }
     }
 
-    // Add styling for planner today - thick inset purple ring
+    // Add styling for planner today - thick inset blue ring (changed from purple)
     if (isPlannerTodayDate && isCurrentMonth) {
-      baseClasses += " ring-inset ring-4 ring-purple-500";
+      baseClasses += " ring-inset ring-4 ring-blue-500";
     } else if (isPlannerTodayDate) {
       // Planner today in different month - subtle inset ring
-      baseClasses += " ring-inset ring-2 ring-purple-300";
+      baseClasses += " ring-inset ring-2 ring-blue-300";
     }
 
     // Override opacity for planner today - always keep it at full visibility
@@ -219,33 +219,33 @@ const PlannerCalendar = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-2 sm:p-4 w-full max-w-md mx-auto">
-      {/* Planner Today Selector */}
-      <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+      {/* Planner Today Selector - Changed to blue theme */}
+      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
-            <Target size={16} className="text-purple-600" />
-            <span className="text-sm font-medium text-purple-800">
+            <Target size={16} className="text-blue-600" />
+            <span className="text-sm font-medium text-blue-800">
               Planner "Today"
             </span>
           </div>
           <button
             onClick={() => setPlannerToday(new Date())}
-            className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+            className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
           >
             Reset to Today
           </button>
         </div>
-        <p className="text-xs text-purple-600 mb-2">
+        <p className="text-xs text-blue-600 mb-2">
           Current: {format(plannerTodayObj, "EEEE, MMMM d, yyyy")}
         </p>
         <div className="space-y-1">
-          <p className="text-xs text-purple-500">
+          <p className="text-xs text-blue-500">
             Double-click any working day to set as new "planner today"
           </p>
-          <p className="text-xs text-purple-500">
+          <p className="text-xs text-blue-500">
             Periods end on the most recent Friday relative to this date
           </p>
-          <p className="text-xs text-purple-500">
+          <p className="text-xs text-blue-500">
             Dimmed dates are outside your current {periodLength}-week period
             window
           </p>
@@ -462,9 +462,9 @@ const PlannerCalendar = () => {
                 ></span>
               )}
 
-              {/* Planner today indicator */}
+              {/* Planner today indicator - Changed to blue */}
               {isPlannerTodayDate && (
-                <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                <span className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
               )}
             </div>
           );
@@ -506,7 +506,7 @@ const PlannerCalendar = () => {
           <span>Weekend</span>
         </div>
         <div className="flex items-center">
-          <div className="w-3 h-3 rounded-full bg-white border-4 border-purple-500 mr-1"></div>
+          <div className="w-3 h-3 rounded-full bg-white border-4 border-blue-500 mr-1"></div>
           <span>Planner Today</span>
         </div>
       </div>
