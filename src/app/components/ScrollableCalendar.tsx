@@ -147,14 +147,12 @@ const ScrollableCalendar = () => {
         );
 
         if (targetElement) {
-          // Scroll to the target element with some offset to center it nicely
+          // Position the planner today date at 75% down the container height
+          // This shows more weeks above for better 4-week period context
           const containerRect = container.getBoundingClientRect();
           const targetRect = targetElement.getBoundingClientRect();
-          const offset =
-            targetRect.top -
-            containerRect.top -
-            containerRect.height / 2 +
-            targetRect.height / 2;
+          const targetPosition = containerRect.height * 0.75;
+          const offset = targetRect.top - containerRect.top - targetPosition;
 
           container.scrollTo({
             top: container.scrollTop + offset,
@@ -185,6 +183,31 @@ const ScrollableCalendar = () => {
       // Set new planner today date
       const newPlannerToday = new Date(dateStr);
       setPlannerToday(newPlannerToday);
+
+      // Scroll to position the new date near the bottom for 4-week context
+      setTimeout(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const targetElement = container.querySelector(
+          `[data-date="${dateStr}"]`
+        );
+
+        if (targetElement) {
+          const containerRect = container.getBoundingClientRect();
+          const targetRect = targetElement.getBoundingClientRect();
+
+          // Position the target date at 75% down the container height
+          // This shows ~3 weeks above and ~1 week below for context
+          const targetPosition = containerRect.height * 0.75;
+          const offset = targetRect.top - containerRect.top - targetPosition;
+
+          container.scrollTo({
+            top: container.scrollTop + offset,
+            behavior: "smooth",
+          });
+        }
+      }, 100); // Small delay to ensure DOM update
     }
   };
 
