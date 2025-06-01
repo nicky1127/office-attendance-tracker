@@ -235,11 +235,7 @@ const ScrollableCalendar = () => {
         baseClasses += " bg-emerald-500 text-white";
       } else {
         // In planner mode, all working days have normal styling with hover effects
-        if (mode === "today") {
-          baseClasses += " bg-white hover:bg-blue-100 text-gray-700";
-        } else {
-          baseClasses += " bg-white hover:bg-emerald-100 text-gray-700";
-        }
+        baseClasses += " bg-white hover:bg-emerald-100 text-gray-700";
       }
     }
 
@@ -307,7 +303,7 @@ const ScrollableCalendar = () => {
         </p>
         <div className="space-y-1">
           <p className="text-xs text-blue-500">
-            Use "Mark Today" mode to set any working day as your reference point
+            Set any working day as your reference point using "Reset to Today"
           </p>
         </div>
       </div>
@@ -316,7 +312,7 @@ const ScrollableCalendar = () => {
       <div className="flex mb-4 border border-gray-200 rounded-lg overflow-hidden">
         <button
           onClick={() => setMode("attend")}
-          className={`flex-1 py-2 px-1 sm:px-3 flex items-center justify-center space-x-1 text-xs sm:text-sm ${
+          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "attend"
               ? "bg-gradient-to-r from-teal-600 to-emerald-400 text-white"
               : "bg-white text-gray-700"
@@ -326,15 +322,15 @@ const ScrollableCalendar = () => {
             size={14}
             className={mode === "attend" ? "text-white" : "text-emerald-700"}
           />
-          <span className="hidden sm:inline">Attend</span>
-          <span className="sm:hidden">Work</span>
+          <span className="hidden sm:inline">Mark Attendance</span>
+          <span className="sm:hidden">Attend</span>
         </button>
 
         <div className="w-px bg-gray-200"></div>
 
         <button
           onClick={() => setMode("leave")}
-          className={`flex-1 py-2 px-1 sm:px-3 flex items-center justify-center space-x-1 text-xs sm:text-sm ${
+          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "leave"
               ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white"
               : "bg-white text-gray-700"
@@ -352,7 +348,7 @@ const ScrollableCalendar = () => {
               }`}
             />
           </div>
-          <span className="hidden sm:inline">Holiday</span>
+          <span className="hidden sm:inline">Mark Holiday</span>
           <span className="sm:hidden">Holiday</span>
         </button>
 
@@ -360,7 +356,7 @@ const ScrollableCalendar = () => {
 
         <button
           onClick={() => setMode("sick")}
-          className={`flex-1 py-2 px-1 sm:px-3 flex items-center justify-center space-x-1 text-xs sm:text-sm ${
+          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
             mode === "sick"
               ? "bg-gradient-to-r from-red-400 to-pink-400 text-white"
               : "bg-white text-gray-700"
@@ -378,27 +374,8 @@ const ScrollableCalendar = () => {
               }`}
             />
           </div>
-          <span className="hidden sm:inline">Sick</span>
+          <span className="hidden sm:inline">Mark Sick</span>
           <span className="sm:hidden">Sick</span>
-        </button>
-
-        <div className="w-px bg-gray-200"></div>
-
-        {/* New Mark Today button */}
-        <button
-          onClick={() => setMode("today")}
-          className={`flex-1 py-2 px-1 sm:px-3 flex items-center justify-center space-x-1 text-xs sm:text-sm ${
-            mode === "today"
-              ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
-              : "bg-white text-gray-700"
-          }`}
-        >
-          <Target
-            size={14}
-            className={mode === "today" ? "text-white" : "text-blue-600"}
-          />
-          <span className="hidden sm:inline">Mark Today</span>
-          <span className="sm:hidden">Today</span>
         </button>
       </div>
 
@@ -479,11 +456,9 @@ const ScrollableCalendar = () => {
                 if (isLeave) return "Annual Leave";
                 if (isPlannerTodayDate)
                   return "Planner Today - Period reference point";
-                if (isNonWorking)
-                  return "Weekend/Holiday (cannot set as planner today)";
+                if (isNonWorking) return "Weekend/Holiday";
                 if (!isInPeriod)
                   return "Outside current period window (dimmed)";
-                if (mode === "today") return "Click to set as planner today";
                 return "Click to mark attendance";
               };
 
