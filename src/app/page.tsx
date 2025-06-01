@@ -12,6 +12,7 @@ import LeaveSummary from "./components/LeaveSummary";
 import PlannerAttendanceStats from "./components/PlannerAttendanceStats";
 import PlannerLeaveSummary from "./components/PlannerLeaveSummary";
 import PlannerIntroduction from "./components/PlannerIntroduction";
+import ImportTrackerData from "./components/ImportTrackerData";
 import AppFooter from "./components/AppFooter";
 import AppIcon from "./components/AppIcon";
 import AppBar from "./components/AppBar";
@@ -167,6 +168,9 @@ export default function Home() {
               <div className="space-y-4">
                 {/* Planner Introduction Component */}
                 <PlannerIntroduction />
+
+                {/* Import Tracker Data Component */}
+                <ImportTrackerData />
 
                 {/* Use Planner-specific components */}
                 <PlannerAttendanceStats />
