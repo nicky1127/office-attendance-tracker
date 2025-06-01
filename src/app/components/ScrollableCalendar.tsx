@@ -48,10 +48,8 @@ const ScrollableCalendar = () => {
     getPlannerPeriodDateStrings,
   } = usePlannerStore();
 
-  // Mode state: 'attend', 'leave', 'sick', or 'today'
-  const [mode, setMode] = useState<"attend" | "leave" | "sick" | "today">(
-    "attend"
-  );
+  // Mode state: 'attend', 'leave', or 'sick'
+  const [mode, setMode] = useState<"attend" | "leave" | "sick">("attend");
 
   // Current viewing month - initialize to planner today's month
   const plannerTodayObj =
@@ -183,13 +181,6 @@ const ScrollableCalendar = () => {
       toggleAnnualLeave(dateStr);
     } else if (mode === "sick") {
       toggleSickLeave(dateStr);
-    } else if (mode === "today") {
-      // Set new planner today date
-      const newPlannerToday = new Date(dateStr);
-      setPlannerToday(newPlannerToday);
-
-      // Reset the scroll flag so it will auto-scroll to the new planner today
-      setHasInitiallyScrolled(false);
     }
   };
 
@@ -428,7 +419,7 @@ const ScrollableCalendar = () => {
       {/* Scrollable calendar dates */}
       <div
         ref={scrollContainerRef}
-        className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-gray-100"
+        className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-gray-100"
         onScroll={handleScroll}
       >
         {/* Single continuous grid for all dates */}
