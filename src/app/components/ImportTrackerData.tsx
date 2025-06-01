@@ -147,7 +147,6 @@ const ImportTrackerData = () => {
                 </>
               ) : (
                 <>
-                  <Copy size={16} />
                   <span>Import</span>
                 </>
               )}
