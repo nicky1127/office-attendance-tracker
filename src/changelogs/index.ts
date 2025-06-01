@@ -1,11 +1,13 @@
 import { ChangelogData } from "./types";
 import { v2_0_1 } from "./2.0.1";
+import { v2_1_0 } from "./2.1.0";
 
 // Registry of all changelog entries
 export const changelogs: ChangelogData = {
+  "2.1.0": v2_1_0,
   "2.0.1": v2_0_1,
   // Add future versions here:
-  // "2.1.0": v2_1_0,
+  // "2.2.0": v2_2_0,
   // "3.0.0": v3_0_0,
 };
 
