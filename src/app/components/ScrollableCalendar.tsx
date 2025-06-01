@@ -48,8 +48,10 @@ const ScrollableCalendar = () => {
     getPlannerPeriodDateStrings,
   } = usePlannerStore();
 
-  // Mode state: 'attend', 'leave', or 'sick'
-  const [mode, setMode] = useState<"attend" | "leave" | "sick">("attend");
+  // Mode state: 'attend', 'leave', 'sick', or 'today'
+  const [mode, setMode] = useState<"attend" | "leave" | "sick" | "today">(
+    "attend"
+  );
 
   // Current viewing month - initialize to planner today's month
   const plannerTodayObj =
@@ -181,18 +183,14 @@ const ScrollableCalendar = () => {
       toggleAnnualLeave(dateStr);
     } else if (mode === "sick") {
       toggleSickLeave(dateStr);
+    } else if (mode === "today") {
+      // Set new planner today date
+      const newPlannerToday = new Date(dateStr);
+      setPlannerToday(newPlannerToday);
+
+      // Reset the scroll flag so it will auto-scroll to the new planner today
+      setHasInitiallyScrolled(false);
     }
-  };
-
-  // Handle setting a new planner today date
-  const handleSetPlannerToday = (dateStr: string, isNonWorking: boolean) => {
-    if (isNonWorking) return; // Can't set a weekend or holiday as "today"
-
-    const newPlannerToday = new Date(dateStr);
-    setPlannerToday(newPlannerToday);
-
-    // Reset the scroll flag so it will auto-scroll to the new planner today
-    setHasInitiallyScrolled(false);
   };
 
   // Helper function to get status colors for any day
@@ -246,7 +244,11 @@ const ScrollableCalendar = () => {
         baseClasses += " bg-emerald-500 text-white";
       } else {
         // In planner mode, all working days have normal styling with hover effects
-        baseClasses += " bg-white hover:bg-emerald-100 text-gray-700";
+        if (mode === "today") {
+          baseClasses += " bg-white hover:bg-blue-100 text-gray-700";
+        } else {
+          baseClasses += " bg-white hover:bg-emerald-100 text-gray-700";
+        }
       }
     }
 
@@ -314,14 +316,7 @@ const ScrollableCalendar = () => {
         </p>
         <div className="space-y-1">
           <p className="text-xs text-blue-500">
-            Double-click any working day to set as new "planner today"
-          </p>
-          <p className="text-xs text-blue-500">
-            Scroll through months • Periods end on most recent Friday
-          </p>
-          <p className="text-xs text-blue-500">
-            Dimmed dates are outside your current {periodLength}-week period
-            window
+            Use "Mark Today" mode to set any working day as your reference point
           </p>
         </div>
       </div>
@@ -330,7 +325,7 @@ const ScrollableCalendar = () => {
       <div className="flex mb-4 border border-gray-200 rounded-lg overflow-hidden">
         <button
           onClick={() => setMode("attend")}
-          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
+          className={`flex-1 py-2 px-1 sm:px-3 flex items-center justify-center space-x-1 text-xs sm:text-sm ${
             mode === "attend"
               ? "bg-gradient-to-r from-teal-600 to-emerald-400 text-white"
               : "bg-white text-gray-700"
@@ -340,15 +335,15 @@ const ScrollableCalendar = () => {
             size={14}
             className={mode === "attend" ? "text-white" : "text-emerald-700"}
           />
-          <span className="hidden sm:inline">Mark Attendance</span>
-          <span className="sm:hidden">Attend</span>
+          <span className="hidden sm:inline">Attend</span>
+          <span className="sm:hidden">Work</span>
         </button>
 
         <div className="w-px bg-gray-200"></div>
 
         <button
           onClick={() => setMode("leave")}
-          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
+          className={`flex-1 py-2 px-1 sm:px-3 flex items-center justify-center space-x-1 text-xs sm:text-sm ${
             mode === "leave"
               ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white"
               : "bg-white text-gray-700"
@@ -366,7 +361,7 @@ const ScrollableCalendar = () => {
               }`}
             />
           </div>
-          <span className="hidden sm:inline">Mark Holiday</span>
+          <span className="hidden sm:inline">Holiday</span>
           <span className="sm:hidden">Holiday</span>
         </button>
 
@@ -374,7 +369,7 @@ const ScrollableCalendar = () => {
 
         <button
           onClick={() => setMode("sick")}
-          className={`flex-1 py-2 px-2 sm:px-4 flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
+          className={`flex-1 py-2 px-1 sm:px-3 flex items-center justify-center space-x-1 text-xs sm:text-sm ${
             mode === "sick"
               ? "bg-gradient-to-r from-red-400 to-pink-400 text-white"
               : "bg-white text-gray-700"
@@ -392,8 +387,27 @@ const ScrollableCalendar = () => {
               }`}
             />
           </div>
-          <span className="hidden sm:inline">Mark Sick</span>
+          <span className="hidden sm:inline">Sick</span>
           <span className="sm:hidden">Sick</span>
+        </button>
+
+        <div className="w-px bg-gray-200"></div>
+
+        {/* New Mark Today button */}
+        <button
+          onClick={() => setMode("today")}
+          className={`flex-1 py-2 px-1 sm:px-3 flex items-center justify-center space-x-1 text-xs sm:text-sm ${
+            mode === "today"
+              ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
+              : "bg-white text-gray-700"
+          }`}
+        >
+          <Target
+            size={14}
+            className={mode === "today" ? "text-white" : "text-blue-600"}
+          />
+          <span className="hidden sm:inline">Mark Today</span>
+          <span className="sm:hidden">Today</span>
         </button>
       </div>
 
@@ -478,7 +492,8 @@ const ScrollableCalendar = () => {
                   return "Weekend/Holiday (cannot set as planner today)";
                 if (!isInPeriod)
                   return "Outside current period window (dimmed)";
-                return "Click to mark attendance • Double-click to set as planner today";
+                if (mode === "today") return "Click to set as planner today";
+                return "Click to mark attendance";
               };
 
               return (
@@ -489,11 +504,6 @@ const ScrollableCalendar = () => {
                   onClick={() => {
                     if (!isNonWorking) {
                       handleDayClick(dateStr, isNonWorking);
-                    }
-                  }}
-                  onDoubleClick={() => {
-                    if (!isNonWorking) {
-                      handleSetPlannerToday(dateStr, isNonWorking);
                     }
                   }}
                   title={getTooltip()}

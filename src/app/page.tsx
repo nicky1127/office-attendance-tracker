@@ -11,7 +11,8 @@ import WeekdaySelector from "./components/WeekdaySelector";
 import LeaveSummary from "./components/LeaveSummary";
 import PlannerAttendanceStats from "./components/PlannerAttendanceStats";
 import PlannerLeaveSummary from "./components/PlannerLeaveSummary";
-import PlannerWeekdaySelector from "./components/PlannerWeekdaySelector";
+import PlannerIntroduction from "./components/PlannerIntroduction";
+import AppFooter from "./components/AppFooter";
 import AppIcon from "./components/AppIcon";
 import AppBar from "./components/AppBar";
 import VersionChangelog from "./components/VersionChangelog";
@@ -153,108 +154,29 @@ export default function Home() {
                 <WeekdaySelector />
                 <Calendar />
 
-                <div className="pt-4 text-center text-xs text-gray-500">
-                  <p className="text-xs text-gray-400 font-mono mb-2">
-                    v{currentVersion}
-                    {typeof window !== "undefined" &&
-                      process.env.NODE_ENV === "development" && (
-                        <span className="ml-2 text-orange-500">(dev)</span>
-                      )}
-                  </p>
-                  <p>Tap on days to mark office attendance</p>
-                  <p>Target: Minimum 40% office attendance rate</p>
-                  <p className="mt-1 text-gray-400">
-                    Rate calculated over rolling {periodLength}-week periods
-                    ending on Fridays
-                  </p>
-                  <p className="mt-3 text-xs text-gray-400">
-                    © 2025 Nicky Lai. All rights reserved.
-                  </p>
-                </div>
+                <AppFooter
+                  currentVersion={currentVersion}
+                  currentPage={currentPage}
+                  periodLength={periodLength}
+                />
               </div>
             </>
           ) : (
             // Planner Page - Uses planner-specific components and scrollable calendar
             <>
               <div className="space-y-4">
-                {/* Planner Introduction - Updated to blue theme */}
-                <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-                  <h2 className="text-lg font-medium text-blue-800 mb-2">
-                    Attendance Planner
-                  </h2>
-                  <p className="text-sm text-blue-600 mb-3">
-                    Plan and explore different attendance scenarios by setting
-                    any working day as your "planner today"
-                  </p>
-                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                    <h3 className="text-sm font-medium text-blue-800 mb-2">
-                      How to use the Planner:
-                    </h3>
-                    <ul className="text-xs text-blue-700 space-y-1.5">
-                      <li>
-                        • <strong>Set Planner Today:</strong> Double-click any
-                        working day to set as your reference "today"
-                      </li>
-                      <li>
-                        • <strong>Period Window:</strong> Choose 4-week or
-                        12-week periods ending on the most recent Friday
-                      </li>
-                      <li>
-                        • <strong>Plan Ahead:</strong> Mark future attendance,
-                        holidays, and sick days
-                      </li>
-                      <li>
-                        • <strong>Live Updates:</strong> See how different
-                        scenarios affect your attendance rate
-                      </li>
-                      <li>
-                        • <strong>Visual Feedback:</strong> Dimmed dates are
-                        outside your current period window
-                      </li>
-                      <li>
-                        • <strong>Reset:</strong> Use "Reset to Today" to return
-                        to the actual current date
-                      </li>
-                    </ul>
-                    <div className="mt-3 pt-2 border-t border-blue-200">
-                      <p className="text-xs text-blue-600">
-                        <strong>Tip:</strong> The blue ring shows your current
-                        "planner today" date. All calculations are based on
-                        periods ending on the most recent Friday relative to
-                        this date.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                {/* Planner Introduction Component */}
+                <PlannerIntroduction />
 
                 {/* Use Planner-specific components */}
                 <PlannerAttendanceStats />
                 <PlannerLeaveSummary />
-                <PlannerWeekdaySelector />
                 <ScrollableCalendar />
 
-                <div className="pt-4 text-center text-xs text-gray-500">
-                  <p className="text-xs text-gray-400 font-mono mb-2">
-                    v{currentVersion} - Planner Mode
-                    {typeof window !== "undefined" &&
-                      process.env.NODE_ENV === "development" && (
-                        <span className="ml-2 text-orange-500">(dev)</span>
-                      )}
-                  </p>
-                  <p>Plan and explore attendance scenarios</p>
-                  <p>Target: Minimum 40% office attendance rate</p>
-                  <p className="mt-1 text-gray-400">
-                    Periods calculated from your "planner today" date ending on
-                    most recent Friday
-                  </p>
-                  <p className="mt-1 text-gray-400">
-                    Double-click dates to set new reference point • Dimmed dates
-                    outside period window
-                  </p>
-                  <p className="mt-3 text-xs text-gray-400">
-                    © 2025 Nicky Lai. All rights reserved.
-                  </p>
-                </div>
+                <AppFooter
+                  currentVersion={currentVersion}
+                  currentPage={currentPage}
+                />
               </div>
             </>
           )}
