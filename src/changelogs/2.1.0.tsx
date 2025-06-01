@@ -15,7 +15,7 @@ const v2_1_0: ChangelogContent = {
       icon: <Menu className="w-5 h-5 text-blue-500" />,
       title: "Enhanced Menu Animations",
       description:
-        "Smooth sliding menu with staggered item animations and improved visual feedback",
+        "Smooth sliding menu with staggered item animations and improved visual feedback ",
     },
   ],
 
